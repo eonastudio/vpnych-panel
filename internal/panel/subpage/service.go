@@ -11,6 +11,7 @@ import (
 	"html"
 	"net/http"
 	"slices"
+	"time"
 
 	"mikan/internal/panel/settings"
 	"mikan/internal/panel/store/db"
@@ -22,13 +23,16 @@ const (
 	AssetBackground = "background"
 )
 
-// AssetLimit is how big an image of name may be; 0: no such image.
+// AssetLimit is how big an image of name may be; 0: no such image. Besides the logo and the
+// background the templates have their own: bg-<x> backgrounds and banner-<x> pictures.
 func AssetLimit(name string) int {
-	switch name {
-	case AssetLogo:
+	switch {
+	case name == AssetLogo:
 		return 512 << 10
-	case AssetBackground:
+	case name == AssetBackground, bgImageRe.MatchString(name):
 		return 2 << 20
+	case bannerImgRe.MatchString(name):
+		return 1 << 20
 	}
 	return 0
 }
@@ -78,12 +82,77 @@ func NewService(q *db.Queries) *Service { return &Service{q: q, set: settings.Ne
 // Page is the stored document over the defaults, cleaned: what does not fit is shown as
 // the default (an older or a hand-edited document never breaks the page).
 func (s *Service) Page(ctx context.Context) (Page, error) {
-	c, _, err := settings.GetOver(ctx, s.set, settings.KeySubPage, Default())
+	def := stored{Page: Default()}
+	// Read over a list of its own: JSON fills the elements of a default slice in place.
+	def.Templates = nil
+	st, _, err := settings.GetOver(ctx, s.set, settings.KeySubPage, def)
 	if err != nil {
 		return Default(), err
 	}
+	c := st.migrate()
 	_ = Normalize(&c)
 	return c, nil
+}
+
+// stored is the document as an older version may have saved it: one look, one list of
+// blocks and one CSS for the whole page, before there were templates.
+type stored struct {
+	Page
+	Look   *legacyLook `json:"look"`
+	Blocks []PageBlock `json:"blocks"`
+	CSS    *string     `json:"css"`
+}
+
+type legacyLook struct {
+	Mode       string             `json:"mode"`
+	Accent     string             `json:"accent"`
+	Background TemplateBackground `json:"background"`
+	Font       string             `json:"font"`
+	Radius     string             `json:"radius"`
+	Cards      string             `json:"cards"`
+}
+
+// migrate turns a document saved before the templates into the classic template, which is
+// what that page looked like; the page keeps showing ВПНыч's unless another was chosen.
+func (st stored) migrate() Page {
+	c := st.Page
+	if c.Templates != nil || st.Look == nil && st.Blocks == nil && st.CSS == nil {
+		return c
+	}
+	t, _ := BuiltinTemplate("classic")
+	if st.Blocks != nil {
+		t.Blocks = st.Blocks
+	}
+	if st.CSS != nil {
+		t.CSS = *st.CSS
+	}
+	if l := st.Look; l != nil {
+		if l.Mode == "dark" {
+			t.Look.Scheme, t.Look.Bg, t.Look.Bg2, t.Look.Card, t.Look.Text, t.Look.Muted, t.Look.Danger = "dark", "#0E1418", "#141D22", "#1B262C", "#F2F5F4", "#93A39F", "#EE4D6A"
+		}
+		t.Look.BrandAccent = l.Accent == "brand"
+		switch l.Font {
+		case "onest", "system", "rounded":
+			t.Look.Font = l.Font
+		}
+		switch l.Radius {
+		case "small":
+			t.Look.Radius = 12
+		case "medium":
+			t.Look.Radius = 18
+		}
+		if l.Cards == "solid" {
+			t.Look.Glass, t.Look.CardAlpha = false, 100
+		}
+		if l.Background.Kind != "" {
+			t.Look.Background = l.Background
+			if l.Background.Kind == "image" {
+				t.Look.Background.Image = AssetBackground
+			}
+		}
+	}
+	c.Templates = []Template{t}
+	return c
 }
 
 // PageAsset is an uploaded image without its bytes.
@@ -116,11 +185,16 @@ type DocItem struct {
 	Platform string `json:"platform,omitempty"`
 }
 
-// Public is what the page is told about itself: the document (its CSS goes into a style
-// of its own), the brand and links to the images.
+// Public is what the page is told about itself: the template it shows (its CSS goes into a
+// style of its own; blocks turned off, banners out of their time and images that are gone
+// left out, the banners' images as links), the page's head, apps and preview, the brand and
+// links to the images.
 type Public struct {
-	Config Page   `json:"config"`
-	Brand  string `json:"brand"`
+	Template Template  `json:"template"`
+	Header   PageBrand `json:"head" doc:"Шапка: логотип и название"`
+	Apps     PageApps  `json:"apps"`
+	OG       PageOG    `json:"og"`
+	Brand    string    `json:"brand"`
 	// Accent is the brand's colour when the page takes it; "" keeps the palette's.
 	Accent     string    `json:"accent,omitempty"`
 	Logo       string    `json:"logo,omitempty"`
@@ -129,13 +203,19 @@ type Public struct {
 	css        string
 }
 
-// Public gathers the page's data. brand and accent are the panel's (settings.KeyBrand,
-// KeyBrandAccent). An image chosen but gone shows as the default: the letter, the theme.
+// Public gathers the page's data with the active template. brand and accent are the panel's
+// (settings.KeyBrand, KeyBrandAccent). An image chosen but gone shows as the default: the
+// letter, the template's own background, a banner without its picture.
 func (s *Service) Public(ctx context.Context, brand, accent string) (Public, error) {
 	c, err := s.Page(ctx)
 	if err != nil {
 		return Public{}, err
 	}
+	return s.PublicOf(ctx, c, c.ActiveTemplate(), brand, accent)
+}
+
+// PublicOf is Public with template t of page c: the editor previews a draft with it.
+func (s *Service) PublicOf(ctx context.Context, c Page, t Template, brand, accent string) (Public, error) {
 	assets, err := s.Assets(ctx)
 	if err != nil {
 		return Public{}, err
@@ -144,27 +224,48 @@ func (s *Service) Public(ctx context.Context, brand, accent string) (Public, err
 	if err != nil {
 		return Public{}, err
 	}
-	p := Public{Config: c, Brand: brand, Docs: []DocItem{}, css: c.CSS}
-	p.Config.CSS = ""
+	p := build(c, t, assets, brand, accent, time.Now().Unix())
+	for _, d := range docs {
+		p.Docs = append(p.Docs, DocItem{ID: d.ID, Title: d.Title, Emoji: d.Emoji, Platform: d.Platform})
+	}
+	return p, nil
+}
+
+func build(c Page, t Template, assets map[string]PageAsset, brand, accent string, now int64) Public {
+	p := Public{Template: t, Header: c.Brand, Apps: c.Apps, OG: c.OG, Brand: brand, Docs: []DocItem{}, css: t.CSS}
+	p.Template.CSS = ""
 	// A block turned off is the admin's draft: it does not go into the page's source.
-	p.Config.Blocks = slices.DeleteFunc(slices.Clone(c.Blocks), func(b PageBlock) bool { return !b.On })
-	if c.Look.Accent == "brand" && ValidColor(accent) {
+	p.Template.Blocks = slices.DeleteFunc(slices.Clone(t.Blocks), func(b PageBlock) bool { return !b.On })
+	p.Template.Banners = []PageBanner{}
+	for _, b := range t.Banners {
+		if !b.Live(now) {
+			continue
+		}
+		if a, ok := assets[b.Image]; ok && b.Image != "" {
+			b.Image = AssetPath(b.Image, a.Hash)
+		} else {
+			b.Image = ""
+		}
+		if b.Title != "" || b.Text != "" || b.Image != "" {
+			p.Template.Banners = append(p.Template.Banners, b)
+		}
+	}
+	if t.Look.BrandAccent && ValidColor(accent) {
 		p.Accent = accent
 	}
 	if a, ok := assets[AssetLogo]; ok {
 		p.Logo = AssetPath(AssetLogo, a.Hash)
 	} else if c.Brand.Logo == "image" {
-		p.Config.Brand.Logo = "letter"
+		p.Header.Logo = "letter"
 	}
-	if a, ok := assets[AssetBackground]; ok && c.Look.Background.Kind == "image" {
-		p.Background = AssetPath(AssetBackground, a.Hash)
-	} else if c.Look.Background.Kind == "image" {
-		p.Config.Look.Background.Kind = "theme"
+	bg := t.Look.Background
+	if a, ok := assets[bg.Image]; ok && bg.Kind == "image" {
+		p.Background = AssetPath(bg.Image, a.Hash)
+	} else if bg.Kind == "image" {
+		p.Template.Look.Background.Kind = "theme"
 	}
-	for _, d := range docs {
-		p.Docs = append(p.Docs, DocItem{ID: d.ID, Title: d.Title, Emoji: d.Emoji, Platform: d.Platform})
-	}
-	return p, nil
+	p.Template.Look.Background.Image = ""
+	return p
 }
 
 // RemoteImages says whether the page may show images from other sites: an instruction or
@@ -173,7 +274,7 @@ func (p Public) RemoteImages() bool {
 	if len(p.Docs) > 0 {
 		return true
 	}
-	for _, b := range p.Config.Blocks {
+	for _, b := range p.Template.Blocks {
 		if b.Type == TypeText && b.On && b.Text != "" {
 			return true
 		}
@@ -187,7 +288,7 @@ func (p Public) RemoteImages() bool {
 // the preview's image.
 func (p Public) Head(root string) []byte {
 	var b bytes.Buffer
-	og := p.Config.OG
+	og := p.OG
 	image := og.Image && p.Logo != ""
 	if og.Title != "" || og.Description != "" || image {
 		meta := func(prop, content string) {

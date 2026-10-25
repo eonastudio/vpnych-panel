@@ -1,11 +1,14 @@
-// The Mini App's home: who is signed in, the subscription's term, its devices, the promo
-// code and the help; for an account without a subscription, the ways to get one.
-import { useId, useRef, useState } from "react";
+// The Mini App's home: who is signed in, then the template's blocks in its order (the
+// subscription's term, its devices, the shop, the promo code, the help, the admin's own
+// texts and links) and its banners; for an account without a subscription, the ways to get one.
+import { Fragment, useId, useRef, useState, type ReactNode } from "react";
 import { t, tMaybe } from "../../i18n";
+import { Markdown } from "../../lib/markdown";
 import { DEVICE_NAME_MAX, desktopOS, deviceDetails, deviceLabel, reportedName } from "../../lib/devices";
 import { ago, bytes, dateShort, expiryText, period, time } from "../../lib/format";
 import { safeHref } from "../../lib/url";
-import { initData, openOutside, postJSON, subRoot, tgEvent } from "../net";
+import { initData, openOutside, outside, postJSON, subRoot, tgEvent } from "../net";
+import { bannersAt, type PageBanner, type PageBlock, type Template } from "../page";
 import { FREE_FAIL, groupText, listPrice, type Offer, type ShopData } from "../shop";
 import type { Device, Info } from "../types";
 import { PaperPlane, RubleTags } from "./art";
@@ -231,11 +234,12 @@ function BalanceCard() {
   );
 }
 
-function Announce({ info }: { info: Info }) {
+function Announce({ info, title }: { info: Info; title?: string }) {
   if (!info.announce) return null;
   const href = safeHref(info.announce_url, { tg: true });
   return (
     <Card className="card-pad">
+      {title ? <div className="label">{title}</div> : null}
       <p className="muted-text" style={{ margin: 0 }}>
         {info.announce}
       </p>
@@ -557,19 +561,119 @@ function Extras({ forNew, skipTrial }: { forNew: boolean; skipTrial?: boolean })
   );
 }
 
+/** A banner of the template: its picture, title, text and button. */
+export function Banner({ banner: b }: { banner: PageBanner }) {
+  const href = safeHref(b.button.url, { tg: true });
+  const body = b.title || b.text || (href && b.button.label);
+  return (
+    <section className="card banner" data-tone={b.tone} role="note">
+      {/* The picture's link is relative: the page's <base> is the subscription path. */}
+      {b.image ? <img src={b.image} alt="" loading="lazy" decoding="async" /> : null}
+      {body ? (
+        <div className="banner-body">
+          {b.title ? <b>{b.title}</b> : null}
+          {b.text ? <p>{b.text}</p> : null}
+          {href && b.button.label ? (
+            <Button variant={b.tone === "accent" ? "glass" : "primary"} onClick={() => openOutside(href)}>
+              {b.button.label}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+/** The template's banners at a place of the home screen. */
+export function Banners({ template, place, after }: { template: Template; place: PageBanner["place"]; after?: string }) {
+  return (
+    <>
+      {bannersAt(template, "miniapp", place, after).map((b) => (
+        <Banner key={b.id} banner={b} />
+      ))}
+    </>
+  );
+}
+
+/** The admin's own text. */
+function TextCard({ block: b }: { block: PageBlock }) {
+  if (!b.text) return null;
+  return (
+    <Card className="card-pad">
+      {b.title ? <h2 className="h-italic" style={{ marginBottom: 14 }}>{b.title}</h2> : null}
+      <Markdown text={b.text} link={(href) => outside(href)} />
+    </Card>
+  );
+}
+
+/** The admin's own buttons. */
+function LinksCard({ block: b }: { block: PageBlock }) {
+  const links = (b.links ?? []).flatMap((l) => {
+    const href = safeHref(l.url, { tg: true });
+    return href ? [{ ...l, href }] : [];
+  });
+  if (!links.length) return null;
+  return (
+    <Card className="card-pad">
+      {b.title ? <div className="label">{b.title}</div> : null}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {links.map((l, i) => (
+          <Button key={i} onClick={() => openOutside(l.href)}>
+            {l.emoji ? <span aria-hidden>{l.emoji}</span> : null}
+            {l.label}
+          </Button>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 export function Home() {
   const info = useInfo();
+  const { page } = useStore();
   const [device, setDevice] = useState<Device | null>(null);
   const shown = device ? (info.devices ?? []).find((d) => d.id === device.id) : undefined;
+  const template = page.template;
+  // The help card stands for both the support and the instructions: at the first of them.
+  let help = false;
+  const section = (b: PageBlock): ReactNode => {
+    switch (b.type) {
+      case "status":
+        return <BalanceCard />;
+      case "announce":
+        return <Announce info={info} title={b.title} />;
+      case "devices":
+        return <DevicesCard onOpen={setDevice} />;
+      case "shop":
+        return <Extras forNew={false} />;
+      case "promo":
+        return <PromoCard />;
+      case "support":
+      case "instructions":
+        if (help) return null;
+        help = true;
+        return <HelpCard />;
+      case "text":
+        return <TextCard block={b} />;
+      case "links":
+        return <LinksCard block={b} />;
+    }
+    // The rest (the apps, the guide, the link, the locations) are on the setup's screens.
+    return null;
+  };
   return (
     <div className="screen home">
       <UserHeader />
-      <BalanceCard />
-      <Announce info={info} />
-      <DevicesCard onOpen={setDevice} />
-      <Extras forNew={false} />
-      <PromoCard />
-      <HelpCard />
+      <Banners template={template} place="top" />
+      {template.blocks.map((b) =>
+        b.on ? (
+          <Fragment key={b.id}>
+            {section(b)}
+            <Banners template={template} place="after" after={b.id} />
+          </Fragment>
+        ) : null,
+      )}
+      <Banners template={template} place="bottom" />
       {shown ? <DeviceSheet key={shown.id} d={shown} onClose={() => setDevice(null)} /> : null}
     </div>
   );

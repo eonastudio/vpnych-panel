@@ -26,10 +26,9 @@ function AppLogo({ name }: { name: string }) {
 export function Wizard() {
   const info = useInfo();
   const { page, subURL, back, home, toast } = useStore();
-  const config = page.config;
-  const lists = Object.fromEntries(PLATFORMS.map((k) => [k, orderApps(APPS[k], config.apps[k])])) as Record<Platform, (typeof APPS)[Platform]>;
+  const lists = Object.fromEntries(PLATFORMS.map((k) => [k, orderApps(APPS[k], page.apps[k])])) as Record<Platform, (typeof APPS)[Platform]>;
   const shown = PLATFORMS.filter((k) => lists[k].length > 0);
-  const want = config.apps.platform === "auto" ? detect() : config.apps.platform;
+  const want = page.apps.platform === "auto" ? detect() : page.apps.platform;
   const [step, setStep] = useState(1);
   const [platform, setPlatform] = useState<Platform>(shown.includes(want) ? want : (shown[0] ?? want));
   const [app, setApp] = useState(0);

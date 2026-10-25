@@ -1,5 +1,5 @@
 // The page as a subscriber sees it, from the draft being edited.
-import { Monitor, Moon, Smartphone, Sun } from "lucide-react";
+import { Monitor, Smartphone } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNodes, useSettings } from "../../../../api/hooks";
 import { Segmented } from "../../../../components/ui";
@@ -10,19 +10,18 @@ import type { Info } from "../../../../sub/types";
 import { firstPlatform } from "../../../../sub/view";
 import { useSubDocs } from "../sub-docs";
 import { PagePreview, type PreviewDevice } from "../sub-page-preview";
-import { COLOR, imageURL, type Form, type View } from "./parts";
+import { assetOf, COLOR, imageURL, type Form, type Template, type View } from "./parts";
 
 const SAMPLE_GB = 1024 ** 3;
 
-export function Preview({ v, draft, platform: editing, bare }: { v: View; draft: Form; platform?: Platform; bare?: boolean }) {
+export function Preview({ v, draft, tpl, platform: editing, bare }: { v: View; draft: Form; tpl: Template; platform?: Platform; bare?: boolean }) {
   const settings = useSettings();
   const nodes = useNodes();
   const docs = useSubDocs();
   const locale = useLocale();
   const [device, setDevice] = useState<PreviewDevice>("phone");
-  const [scheme, setScheme] = useState<"light" | "dark">(() => (window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
   const [tg, setTg] = useState(false);
-  const look = draft.config.look;
+  const look = tpl.look;
   const s = settings.data;
   const brand = v.brand.trim() || "VPN";
   const info = useMemo<Info>(() => {
@@ -65,10 +64,10 @@ export function Preview({ v, draft, platform: editing, bare }: { v: View; draft:
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [locale],
   );
-  const accent = look.accent === "brand" && COLOR.test(draft.brand_accent.trim()) ? draft.brand_accent.trim().toUpperCase() : undefined;
+  const accent = look.brand_accent && COLOR.test(draft.brand_accent.trim()) ? draft.brand_accent.trim().toUpperCase() : undefined;
   const published = (docs.data ?? []).filter((d) => d.published).map((d) => ({ id: d.id, title: d.title, emoji: d.emoji, platform: d.platform, body: d.body }));
-  const platform = editing ?? firstPlatform(draft.config, device === "phone" ? "ios" : "windows");
-  const shownScheme = look.mode === "system" ? scheme : look.mode;
+  const platform = editing ?? firstPlatform(draft.config.apps, device === "phone" ? "ios" : "windows");
+  const asset = (name?: string) => imageURL(assetOf(v, name));
   return (
     <section className={bare ? "flex flex-col gap-3" : "card glass flex flex-col gap-3"} aria-label={t("settings.page.preview")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -82,16 +81,6 @@ export function Preview({ v, draft, platform: editing, bare }: { v: View; draft:
               <Monitor size={14} aria-hidden />
             </button>
           </div>
-          {look.mode === "system" ? (
-            <div className="seg" role="group" aria-label={t("settings.page.previewScheme")}>
-              <button type="button" aria-pressed={scheme === "light"} onClick={() => setScheme("light")} aria-label={t("settings.page.modeLight")} title={t("settings.page.modeLight")}>
-                <Sun size={14} aria-hidden />
-              </button>
-              <button type="button" aria-pressed={scheme === "dark"} onClick={() => setScheme("dark")} aria-label={t("settings.page.modeDark")} title={t("settings.page.modeDark")}>
-                <Moon size={14} aria-hidden />
-              </button>
-            </div>
-          ) : null}
           <Segmented
             label={t("settings.page.previewWhere")}
             value={tg ? "tg" : "web"}
@@ -104,16 +93,18 @@ export function Preview({ v, draft, platform: editing, bare }: { v: View; draft:
         </div>
       </div>
       <PagePreview
-        config={draft.config}
+        template={tpl}
+        head={draft.config.brand}
+        apps={draft.config.apps}
+        asset={asset}
         brand={brand}
         accent={accent}
         logo={imageURL(v.logo)}
-        background={look.background.kind === "image" ? imageURL(v.background) : undefined}
+        background={look.background.kind === "image" ? asset(look.background.image) : undefined}
         docs={published}
         info={info}
         subURL="https://vpn.example.com/sub/k3J9fQ2mXa7d"
         device={device}
-        scheme={shownScheme}
         tg={tg}
         platform={platform}
         shop={shop}

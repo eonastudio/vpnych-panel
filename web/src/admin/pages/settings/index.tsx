@@ -29,7 +29,10 @@ type Tab = SettingsSearch["tab"];
 const ICONS = { general: Globe, subscription: Link2, page: LayoutTemplate, routing: Route, security: ShieldCheck, support: LifeBuoy, system: Cpu, import: ArrowDownToLine } as const;
 
 const PART_LABELS: Record<string, Key> = {
+  templates: "settings.page.tab.templates",
   look: "settings.page.tab.look",
+  texts: "settings.page.tab.texts",
+  banners: "settings.page.tab.banners",
   brand: "settings.page.tab.brand",
   blocks: "settings.page.tab.blocks",
   apps: "settings.page.tab.apps",
@@ -58,7 +61,7 @@ export function SettingsPage() {
   // The routing opens where it is in use: the own YAML once there is one. An old link to the
   // simple mode ("simple") opens the mode.
   const routingPart: RoutingPart = ROUTING_PARTS.includes(part as RoutingPart) ? (part as RoutingPart) : settings.data?.sub_template.trim() && part !== "simple" ? "yaml" : "mode";
-  const pagePart: SubPagePart = (part as SubPagePart | undefined) ?? "look";
+  const pagePart: SubPagePart = SETTINGS_PARTS.page.includes(part as SubPagePart) ? (part as SubPagePart) : "templates";
   const shownPart = tab === "page" ? pagePart : tab === "routing" ? routingPart : undefined;
   const wide = tab === "page" || tab === "routing";
   return (

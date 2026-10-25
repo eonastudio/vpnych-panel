@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -30,6 +31,7 @@ type SubPageView struct {
 	BrandAccent string             `json:"brand_accent" doc:"Цвет бренда (settings.brand_accent); его же получают приложения с брендингом"`
 	Logo        *subpage.PageAsset `json:"logo,omitempty"`
 	Background  *subpage.PageAsset `json:"background,omitempty"`
+	Images      map[string]subpage.PageAsset `json:"images" doc:"Загруженные картинки шаблонов (фоны bg-* и background, баннеры banner-*) по имени"`
 }
 
 type subPageOutput struct{ Body SubPageView }
@@ -43,13 +45,13 @@ type putSubPageInput struct {
 }
 
 type subImageInput struct {
-	Name string `path:"name" enum:"logo,background"`
+	Name string `path:"name" pattern:"^(logo|background|bg-[a-z0-9-]{1,24}|banner-[a-z0-9-]{1,40})$" doc:"logo, background, bg-<x> (фон шаблона) или banner-<x> (картинка баннера)"`
 }
 
 type putSubImageInput struct {
-	Name string `path:"name" enum:"logo,background"`
+	Name string `path:"name" pattern:"^(logo|background|bg-[a-z0-9-]{1,24}|banner-[a-z0-9-]{1,40})$" doc:"logo, background, bg-<x> (фон шаблона) или banner-<x> (картинка баннера)"`
 	Body struct {
-		Data string `json:"data" minLength:"1" maxLength:"2800000" doc:"Картинка в base64: PNG, JPEG или WebP; логотип до 512 КБ, фон до 2 МБ. SVG не принимается"`
+		Data string `json:"data" minLength:"1" maxLength:"2800000" doc:"Картинка в base64: PNG, JPEG или WebP; логотип до 512 КБ, фон до 2 МБ, баннер до 1 МБ. SVG не принимается"`
 	}
 }
 
@@ -132,7 +134,7 @@ func (h *handlers) subPageView(ctx context.Context) (SubPageView, error) {
 	if err != nil {
 		return SubPageView{}, err
 	}
-	v := SubPageView{Config: c, Defaults: subpage.Default()}
+	v := SubPageView{Config: c, Defaults: subpage.Default(), Images: map[string]subpage.PageAsset{}}
 	if v.Brand, err = h.d.Settings.String(ctx, settings.KeyBrand); err != nil {
 		return v, err
 	}
@@ -151,6 +153,11 @@ func (h *handlers) subPageView(ctx context.Context) (SubPageView, error) {
 	}
 	if a, ok := assets[subpage.AssetBackground]; ok {
 		v.Background = &a
+	}
+	for name, a := range assets {
+		if name == subpage.AssetBackground || subpage.TemplateImage(name) {
+			v.Images[name] = a
+		}
 	}
 	return v, nil
 }
@@ -188,7 +195,7 @@ func (h *handlers) putSubPage(ctx context.Context, in *putSubPageInput) (*subPag
 		}
 		accent = saved
 	}
-	if c.Look.Accent == "brand" && accent == "" {
+	if accent == "" && slices.ContainsFunc(c.Templates, func(t subpage.Template) bool { return t.Look.BrandAccent }) {
 		details = append(details, fieldDetail("body.brand_accent", "color_required", nil))
 	}
 	if in.Body.Brand != nil && (strings.ContainsAny(*in.Body.Brand, "\r\n") || subpage.HasControl(*in.Body.Brand)) {
@@ -205,8 +212,18 @@ func (h *handlers) putSubPage(ctx context.Context, in *putSubPageInput) (*subPag
 		}
 		details = append(details, fieldDetail(field, "logo_missing", nil))
 	}
-	if _, ok := assets[subpage.AssetBackground]; !ok && c.Look.Background.Kind == "image" {
-		details = append(details, fieldDetail("body.config.look.background.kind", "background_missing", nil))
+	for i, t := range c.Templates {
+		at := "body.config.templates[" + strconv.Itoa(i) + "]."
+		if bg := t.Look.Background; bg.Kind == "image" {
+			if _, ok := assets[bg.Image]; !ok {
+				details = append(details, fieldDetail(at+"look.background.image", "background_missing", nil))
+			}
+		}
+		for j, b := range t.Banners {
+			if _, ok := assets[b.Image]; b.Image != "" && !ok {
+				details = append(details, fieldDetail(at+"banners["+strconv.Itoa(j)+"].image", "image_missing", nil))
+			}
+		}
 	}
 	if len(details) > 0 {
 		return nil, fieldErrs(details...)
@@ -228,6 +245,15 @@ func (h *handlers) putSubPage(ctx context.Context, in *putSubPageInput) (*subPag
 	})
 	if err != nil {
 		return nil, err
+	}
+	// The templates' images nothing points at any more go with the save.
+	used := c.Images()
+	for name := range assets {
+		if subpage.TemplateImage(name) && !used[name] {
+			if _, err := h.d.Store.Q.DeleteSubAsset(ctx, name); err != nil {
+				return nil, err
+			}
+		}
 	}
 	h.audit(ctx, sessionOf(ctx).AdminID, "sub_page.update", "", "", nil)
 	return h.getSubPage(ctx, nil)

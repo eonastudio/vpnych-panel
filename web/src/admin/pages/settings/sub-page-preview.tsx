@@ -5,9 +5,9 @@ import "../../../sub/look.css";
 import { useDeferredValue, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { Button } from "../../../components/ui";
-import { getLocale, t, useLocale } from "../../../i18n";
+import { getLocale, overrideTexts, t, useLocale } from "../../../i18n";
 import type { Platform } from "../../../sub/apps";
-import { cleanCSS, paintLook, titleOf, type DocItem, type DocView, type PageConfig } from "../../../sub/page";
+import { cleanCSS, paintLook, titleOf, type DocItem, type DocView, type PageApps, type PageBrand, type Template } from "../../../sub/page";
 import { ReissueSection } from "../../../sub/reissue";
 import { Shop, type ShopData } from "../../../sub/shop";
 import type { Info } from "../../../sub/types";
@@ -16,7 +16,12 @@ import { DocScreen, PageBackdrop, PageBlocks, PageShell } from "../../../sub/vie
 export type PreviewDevice = "phone" | "desktop";
 
 type PreviewProps = {
-  config: PageConfig;
+  /** The template being edited, as the draft has it. */
+  template: Template;
+  head: PageBrand;
+  apps: PageApps;
+  /** A picture of the page by its name (a banner's), as a link. */
+  asset: (name?: string) => string | undefined;
   brand: string;
   /** The brand's colour when the page takes it. */
   accent?: string;
@@ -26,7 +31,6 @@ type PreviewProps = {
   info: Info;
   subURL: string;
   device: PreviewDevice;
-  scheme: "light" | "dark";
   /** Shown as the Mini App: the shop and promo codes are there. */
   tg: boolean;
   platform: Platform;
@@ -87,12 +91,17 @@ export function PagePreview(props: PreviewProps) {
 
   // Three effects, each on what it paints: a key typed into a text of the page redraws the
   // page, not the look or the admin's CSS, which the frame would re-style for nothing.
-  const { look, css } = props.config;
+  const { look, css, base, texts } = props.template;
   useEffect(() => {
     const doc = frame.current?.contentDocument;
     if (!ready || !doc) return;
-    paintLook(doc.documentElement, look, props.scheme, props.accent);
-  }, [ready, look, props.scheme, props.accent]);
+    paintLook(doc.documentElement, look, base, props.accent);
+  }, [ready, look, base, props.accent]);
+
+  // The template's texts in place of the dictionary's: only the page's (sub.*) keys, which
+  // the panel itself hardly reads; dropped when the editor closes.
+  useEffect(() => overrideTexts(texts), [texts]);
+  useEffect(() => () => overrideTexts([]), []);
 
   useEffect(() => {
     const doc = frame.current?.contentDocument;
@@ -144,8 +153,8 @@ function PreviewPage(p: PreviewProps) {
   };
   const shell = (children: React.ReactNode) => (
     <div onClickCapture={stay}>
-      <PageBackdrop look={p.config.look} image={p.background} />
-      <PageShell config={p.config} brand={p.brand} logo={p.logo} right={<span className="ml-auto text-xs font-semibold text-[var(--ink-500)]">{getLocale().toUpperCase()}</span>}>
+      <PageBackdrop look={p.template.look} image={p.background} />
+      <PageShell head={p.head} brand={p.brand} logo={p.logo} right={<span className="ml-auto text-xs font-semibold text-[var(--ink-500)]">{getLocale().toUpperCase()}</span>}>
         {children}
       </PageShell>
     </div>
@@ -154,10 +163,12 @@ function PreviewPage(p: PreviewProps) {
     const doc = p.docs.find((d) => d.id === docId);
     return shell(<DocScreen key={docId} item={doc} load={() => (doc ? Promise.resolve(doc) : Promise.reject(new Error("gone")))} onBack={() => setDocId(null)} tgMode={p.tg} />);
   }
-  const promoTitle = titleOf(p.config, "promo");
+  const promoTitle = titleOf(p.template, "promo");
   return shell(
     <PageBlocks
-      config={p.config}
+      template={p.template}
+      apps={p.apps}
+      asset={p.asset}
       info={p.info}
       subURL={p.subURL}
       tgMode={p.tg}
@@ -182,7 +193,7 @@ function PreviewPage(p: PreviewProps) {
             subRoot=""
             initData=""
             token=""
-            title={titleOf(p.config, "shop") || t("sub.shop")}
+            title={titleOf(p.template, "shop") || t("sub.shop")}
             openInvoice={() => undefined}
             openLink={() => undefined}
             onRefresh={() => undefined}
@@ -191,7 +202,7 @@ function PreviewPage(p: PreviewProps) {
       }
       reissue={
         <div inert>
-          <ReissueSection info={{ ...p.info, reissue: true }} subURL="" title={titleOf(p.config, "reissue")} onDone={() => undefined} />
+          <ReissueSection info={{ ...p.info, reissue: true }} subURL="" title={titleOf(p.template, "reissue")} onDone={() => undefined} />
         </div>
       }
       reload={() => Promise.resolve()}

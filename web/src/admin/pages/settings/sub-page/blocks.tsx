@@ -7,7 +7,7 @@ import { Button, Field } from "../../../../components/ui";
 import { t, type Key } from "../../../../i18n";
 import { safeHref } from "../../../../lib/url";
 import { CUSTOM_TYPES, MINI_APP_ONLY, type BlockType } from "../../../../sub/page";
-import { Card, MAX_CUSTOM, type Block, type Config, type Set } from "./parts";
+import { Card, MAX_CUSTOM, type Block, type TemplateProps } from "./parts";
 
 /** A block's usual heading on the page, for the placeholder of its own. */
 const USUAL: Partial<Record<BlockType, Key>> = {
@@ -26,7 +26,7 @@ const USUAL: Partial<Record<BlockType, Key>> = {
 
 const newId = (type: "text" | "links") => `${type}-${Math.random().toString(36).slice(2, 10) || "a"}`;
 
-function blockName(b: Block): string {
+export function blockName(b: Block): string {
   if (b.type === "text") return b.title || firstLine(b.text ?? "") || t("settings.page.blockNames.text");
   if (b.type === "links") return b.title || t("settings.page.blockNames.links");
   return t(`settings.page.blockNames.${b.type}`);
@@ -37,9 +37,10 @@ function firstLine(md: string): string {
   return line.replace(/^[#>*\-\s]+/, "").slice(0, 60);
 }
 
-export function BlocksSection({ config, set, errors, announce }: { config: Config; set: Set; errors: Record<string, string>; announce: (text: string) => void }) {
+export function BlocksSection({ tpl, setTpl, errors, at, announce }: TemplateProps & { announce: (text: string) => void }) {
   const [open, setOpen] = useState<string | null>(null);
-  const blocks = config.blocks;
+  const blocks = tpl.blocks;
+  const set = setTpl;
   const custom = blocks.filter((b) => CUSTOM_TYPES.includes(b.type)).length;
   const setBlock = (i: number, patch: Partial<Block>) => set((c) => ({ ...c, blocks: c.blocks.map((b, j) => (j === i ? { ...b, ...patch } : b)) }));
   const move = (i: number, step: -1 | 1) => {
@@ -62,7 +63,7 @@ export function BlocksSection({ config, set, errors, announce }: { config: Confi
     setOpen(b.id);
   };
   // Errors of a block's fields by its index, at the block (open it so they show).
-  const blockErrors = (i: number) => Object.entries(errors).filter(([k]) => k.startsWith(`config.blocks[${i}]`));
+  const blockErrors = (i: number) => Object.entries(errors).filter(([k]) => k.startsWith(`${at}.blocks[${i}]`));
   return (
     <Card title={t("settings.page.blocks")} sub={t("settings.page.blocksSub")}>
       <ul className="flex flex-col gap-2">
@@ -97,7 +98,7 @@ export function BlocksSection({ config, set, errors, announce }: { config: Confi
               </div>
               {expanded && b.type !== "status" ? (
                 <div id={panel} className="mt-3 border-t border-[var(--hairline)] pt-3">
-                  <BlockSetup block={b} index={i} setBlock={(patch) => setBlock(i, patch)} errors={errors} />
+                  <BlockSetup block={b} prefix={`${at}.blocks[${i}]`} setBlock={(patch) => setBlock(i, patch)} errors={errors} />
                   {CUSTOM_TYPES.includes(b.type) ? (
                     <Button
                       size="sm"
@@ -129,8 +130,8 @@ export function BlocksSection({ config, set, errors, announce }: { config: Confi
   );
 }
 
-function BlockSetup({ block: b, index: i, setBlock, errors }: { block: Block; index: number; setBlock: (patch: Partial<Block>) => void; errors: Record<string, string> }) {
-  const at = (field: string) => errors[`config.blocks[${i}].${field}`];
+function BlockSetup({ block: b, prefix, setBlock, errors }: { block: Block; prefix: string; setBlock: (patch: Partial<Block>) => void; errors: Record<string, string> }) {
+  const at = (field: string) => errors[`${prefix}.${field}`];
   const usual = USUAL[b.type];
   const titleLabel = b.type === "telegram" || b.type === "support" ? t("settings.page.buttonText") : t("settings.page.blockTitle");
   const links = b.links ?? [];

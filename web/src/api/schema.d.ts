@@ -3219,6 +3219,11 @@ export interface components {
             /** Format: int64 */
             tg_id: number;
         };
+        BannerButton: {
+            label: string;
+            /** @description https://, http:// или tg:// */
+            url: string;
+        };
         BotSlotInputBody: {
             /** @description id аддона с правом bot или пусто */
             addon: string;
@@ -4747,14 +4752,13 @@ export interface components {
             tariffs: number[];
         };
         Page: {
+            /** @description Шаблон, который видят подписчики */
+            active: string;
             apps: components["schemas"]["PageApps"];
-            /** @description Блоки страницы в их порядке; встроенные — по одному, своих (text, links) — до 12 */
-            blocks: components["schemas"]["PageBlock"][];
             brand: components["schemas"]["PageBrand"];
-            /** @description Свой CSS страницы подписки (не админки), до 20 КБ; @import и < убираются */
-            css: string;
-            look: components["schemas"]["PageLook"];
             og: components["schemas"]["PageOG"];
+            /** @description Встроенные шаблоны и свои (до 8); не показанные — черновики */
+            templates: components["schemas"]["Template"][];
         };
         PageAppList: {
             hidden: string[];
@@ -4783,26 +4787,37 @@ export interface components {
             /** Format: int64 */
             updated_at: number;
         };
-        PageBackground: {
+        PageBanner: {
+            after: string;
+            button: components["schemas"]["BannerButton"];
             /**
              * Format: int64
-             * @description Направление градиента в градусах
+             * @description Показывать с (unix-время); 0 — сразу
              */
-            angle: number;
+            from: number;
+            id: string;
+            /** @description Загруженная картинка banner-<x>; пусто — без неё */
+            image: string;
+            on: boolean;
             /**
-             * Format: int64
-             * @description Затемнение картинки, %
-             */
-            dim: number;
-            /** @description #RRGGBB */
-            from: string;
-            /**
-             * @description theme — фон темы, solid — цвет from, gradient — от from к to, image — загруженная картинка
+             * @description top — над блоками, bottom — под ними, after — после блока after
              * @enum {string}
              */
-            kind: "theme" | "solid" | "gradient" | "image";
-            /** @description #RRGGBB */
-            to: string;
+            place: "top" | "bottom" | "after";
+            text: string;
+            title: string;
+            /** @enum {string} */
+            tone: "accent" | "card" | "warning";
+            /**
+             * Format: int64
+             * @description Показывать до (unix-время); 0 — всегда
+             */
+            until: number;
+            /**
+             * @description Где показывать: везде, только в Mini App, только в браузере
+             * @enum {string}
+             */
+            where: "all" | "miniapp" | "browser";
         };
         PageBlock: {
             id: string;
@@ -4832,42 +4847,18 @@ export interface components {
             /** @description https://, http:// или tg:// */
             url: string;
         };
-        PageLook: {
-            /**
-             * @description theme — цвет палитры, brand — цвет бренда (brand_accent)
-             * @enum {string}
-             */
-            accent: "theme" | "brand";
-            background: components["schemas"]["PageBackground"];
-            /**
-             * @description glass — полупрозрачные карточки, solid — непрозрачные
-             * @enum {string}
-             */
-            cards: "glass" | "solid";
-            /**
-             * @description default — Unbounded и Onest, onest — только Onest, system — шрифт устройства, rounded — скруглённый системный
-             * @enum {string}
-             */
-            font: "default" | "onest" | "system" | "rounded";
-            /**
-             * @description light, dark (как Midnight) или system — как у посетителя
-             * @enum {string}
-             */
-            mode: "light" | "dark" | "system";
-            /**
-             * @description Тема, как темы панели. mikan, ocean, sakura и forest следуют mode; остальные светлые или тёмные сами
-             * @enum {string}
-             */
-            palette: "mikan" | "ocean" | "sakura" | "forest" | "latte" | "snow" | "dawn" | "dune" | "graphite" | "abyss" | "ember" | "plum" | "moss" | "terminal" | "nord" | "mocha" | "tokyo" | "dracula" | "aurora" | "cosmos";
-            /** @enum {string} */
-            radius: "small" | "medium" | "large";
-        };
         PageOG: {
             description: string;
             /** @description Логотип картинкой превью */
             image: boolean;
             /** @description Заголовок превью; пусто — бренд */
             title: string;
+        };
+        PageText: {
+            en: string;
+            /** @description Ключ словаря, sub.… */
+            key: string;
+            ru: string;
         };
         PasswordInputBody: {
             current: string;
@@ -5487,7 +5478,7 @@ export interface components {
             successful_activations: number;
         };
         PutSubImageInputBody: {
-            /** @description Картинка в base64: PNG, JPEG или WebP; логотип до 512 КБ, фон до 2 МБ. SVG не принимается */
+            /** @description Картинка в base64: PNG, JPEG или WebP; логотип до 512 КБ, фон до 2 МБ, баннер до 1 МБ. SVG не принимается */
             data: string;
         };
         PutSubPageInputBody: {
@@ -6083,6 +6074,10 @@ export interface components {
             config: components["schemas"]["Page"];
             /** @description Страница по умолчанию — к ней ведёт «Сбросить» */
             defaults: components["schemas"]["Page"];
+            /** @description Загруженные картинки шаблонов (фоны bg-* и background, баннеры banner-*) по имени */
+            images: {
+                [key: string]: components["schemas"]["PageAsset"];
+            };
             logo?: components["schemas"]["PageAsset"];
         };
         SupportEnterInputBody: {
@@ -6384,6 +6379,92 @@ export interface components {
             token_hint?: string;
             /** @description Токен сохранён */
             token_set: boolean;
+        };
+        Template: {
+            banners: components["schemas"]["PageBanner"][];
+            /**
+             * @description Встроенный шаблон, к которому ведёт «Сбросить»
+             * @enum {string}
+             */
+            base: "vpnych" | "classic" | "light" | "minimal" | "neon";
+            /** @description Блоки в их порядке; встроенные — по одному, своих (text, links) — до 12 */
+            blocks: components["schemas"]["PageBlock"][];
+            /** @description Свой CSS шаблона, до 20 КБ; @import и < убираются */
+            css: string;
+            /** @description Встроенные: vpnych, classic, light, minimal, neon; свои: own-<x> */
+            id: string;
+            look: components["schemas"]["TemplateLook"];
+            /** @description Название в редакторе; пусто — название встроенного */
+            name: string;
+            /** @description Свои тексты и надписи кнопок вместо обычных, по ключам словаря sub.* */
+            texts: components["schemas"]["PageText"][];
+        };
+        TemplateBackground: {
+            /** Format: int64 */
+            angle: number;
+            /**
+             * Format: int64
+             * @description Затемнение картинки, %
+             */
+            dim: number;
+            from: string;
+            /** @description Загруженная картинка: background или bg-<x> */
+            image: string;
+            /**
+             * @description theme — от bg2 к bg, solid — цвет from, gradient — от from к to, image — картинка image
+             * @enum {string}
+             */
+            kind: "theme" | "solid" | "gradient" | "image";
+            to: string;
+        };
+        TemplateLook: {
+            /** @description Кнопки и акценты */
+            accent: string;
+            /** @description Второй цвет акцента (градиент кнопок) */
+            accent2: string;
+            background: components["schemas"]["TemplateBackground"];
+            /** @description Фон, #RRGGBB */
+            bg: string;
+            /** @description Второй цвет фона (верх градиента и шапка Telegram) */
+            bg2: string;
+            /** @description Акцент — цвет бренда (brand_accent) вместо accent */
+            brand_accent: boolean;
+            /** @description Карточки */
+            card: string;
+            /**
+             * Format: int64
+             * @description Непрозрачность карточек, %
+             */
+            card_alpha: number;
+            /** @description Ошибки и предупреждения */
+            danger: string;
+            /**
+             * @description unbounded — заголовки Unbounded, текст Onest
+             * @enum {string}
+             */
+            font: "inter" | "onest" | "unbounded" | "system" | "rounded" | "mono";
+            /** @description Стеклянные карточки (размытие под ними) */
+            glass: boolean;
+            /** @description Свечение акцента на фоне */
+            glow: boolean;
+            /**
+             * @description italic — курсивом заглавными, как ВПНыч
+             * @enum {string}
+             */
+            headings: "italic" | "regular";
+            /** @description Второстепенный текст */
+            muted: string;
+            /**
+             * Format: int64
+             * @description Скругление карточек, px
+             */
+            radius: number;
+            /**
+             * @description Светлая или тёмная схема: от неё цвета системных элементов
+             * @enum {string}
+             */
+            scheme: "light" | "dark";
+            text: string;
         };
         TermBody: {
             /**
@@ -11271,7 +11352,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                name: "logo" | "background";
+                /** @description logo, background, bg-<x> (фон шаблона) или banner-<x> (картинка баннера) */
+                name: string;
             };
             cookie?: never;
         };
@@ -11307,7 +11389,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                name: "logo" | "background";
+                /** @description logo, background, bg-<x> (фон шаблона) или banner-<x> (картинка баннера) */
+                name: string;
             };
             cookie?: never;
         };
@@ -11342,7 +11425,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                name: "logo" | "background";
+                /** @description logo, background, bg-<x> (фон шаблона) или banner-<x> (картинка баннера) */
+                name: string;
             };
             cookie?: never;
         };

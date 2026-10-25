@@ -69,10 +69,11 @@ func TestSubPageDefaultIsUnchanged(t *testing.T) {
 		t.Fatalf("page: %d %s", resp.StatusCode, body)
 	}
 	p := pageData(t, body)
-	// The page gets the blocks that are on: the default's own, in its order.
+	// The page gets ВПНыч's template with the blocks that are on, in its order.
 	def := subpage.Default()
-	def.Blocks = slices.DeleteFunc(def.Blocks, func(b subpage.PageBlock) bool { return !b.On })
-	if !reflect.DeepEqual(p.Config, def) || p.Brand != "VPN" || p.Accent != "" || p.Logo != "" || p.Background != "" || len(p.Docs) != 0 {
+	tpl := def.ActiveTemplate()
+	tpl.Blocks = slices.DeleteFunc(tpl.Blocks, func(b subpage.PageBlock) bool { return !b.On })
+	if !reflect.DeepEqual(p.Template, tpl) || p.Header != def.Brand || p.Brand != "VPN" || p.Accent != "" || p.Logo != "" || p.Background != "" || len(p.Docs) != 0 {
 		t.Fatalf("default page data: %+v", p)
 	}
 	for _, extra := range []string{"<style", "og:", "<link"} {
@@ -86,7 +87,7 @@ func TestSubPageDefaultIsUnchanged(t *testing.T) {
 		t.Errorf("CSP changed: %s", got)
 	}
 	// The Mini App is the same page.
-	if resp, body := h.do(http.MethodGet, "/"+subPath+"/tg", nil, nil); resp.StatusCode != http.StatusOK || !reflect.DeepEqual(pageData(t, body).Config, def) {
+	if resp, body := h.do(http.MethodGet, "/"+subPath+"/tg", nil, nil); resp.StatusCode != http.StatusOK || !reflect.DeepEqual(pageData(t, body).Template, tpl) {
 		t.Fatalf("mini app page: %d", resp.StatusCode)
 	}
 }
@@ -111,12 +112,14 @@ func TestSubPageEditorEndToEnd(t *testing.T) {
 		data []byte
 		code string
 	}{
-		"svg":       {"logo", []byte(`<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>`), "image_type"},
-		"html":      {"logo", []byte("<html><script>alert(1)</script></html>"), "image_type"},
-		"too big":   {"logo", pngBytes(512 << 10), "image_too_big"},
-		"bad name":  {"favicon", pngBytes(10), ""},
-		"not b64":   {"logo", nil, "image_type"},
-		"bg as svg": {"background", []byte(`<?xml version="1.0"?><svg/>`), "image_type"},
+		"svg":        {"logo", []byte(`<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>`), "image_type"},
+		"html":       {"logo", []byte("<html><script>alert(1)</script></html>"), "image_type"},
+		"too big":    {"logo", pngBytes(512 << 10), "image_too_big"},
+		"bad name":   {"favicon", pngBytes(10), ""},
+		"not b64":    {"logo", nil, "image_type"},
+		"bg as svg":  {"background", []byte(`<?xml version="1.0"?><svg/>`), "image_type"},
+		"banner big": {"banner-sale", pngBytes(1 << 20), "image_too_big"},
+		"bg escapes": {"bg-..", pngBytes(10), ""},
 	} {
 		var resp *http.Response
 		var out []byte
@@ -138,35 +141,57 @@ func TestSubPageEditorEndToEnd(t *testing.T) {
 
 	// A save is refused whole when anything in it is wrong, and names the field.
 	c := subpage.Default()
-	c.Look.Background = subpage.PageBackground{Kind: "image"}
-	c.Blocks = append(c.Blocks, subpage.PageBlock{ID: "links-a", Type: subpage.TypeLinks, On: true, Links: []subpage.PageLink{{Label: "x", URL: "javascript:alert(1)"}}})
+	c.Templates[0].Look.Background = subpage.TemplateBackground{Kind: "image", Image: "bg-night"}
+	c.Templates[2].Banners = []subpage.PageBanner{{ID: "a", On: true, Title: "x", Image: "banner-gone", Place: "top", Tone: "accent", Where: "all"}}
+	c.Templates[0].Blocks = append(c.Templates[0].Blocks, subpage.PageBlock{ID: "links-a", Type: subpage.TypeLinks, On: true, Links: []subpage.PageLink{{Label: "x", URL: "javascript:alert(1)"}}})
 	resp, out = h.do(http.MethodPut, api+"/sub-page", map[string]any{"config": c}, csrf)
-	if resp.StatusCode != http.StatusUnprocessableEntity || !strings.Contains(string(out), "background_missing") || !strings.Contains(string(out), "body.config.blocks[14].links[0].url") {
-		t.Fatalf("bad save: %d %s", resp.StatusCode, out)
-	}
-	resp, out = h.do(http.MethodPut, api+"/sub-page", map[string]any{"config": subpage.Page{Look: subpage.PageLook{Palette: "neon"}}}, csrf)
-	if resp.StatusCode != http.StatusUnprocessableEntity {
-		t.Fatalf("an unknown palette: %d %s", resp.StatusCode, out)
+	for _, want := range []string{"body.config.templates[0].look.background.image", "background_missing", "body.config.templates[2].banners[0].image", "image_missing", "body.config.templates[0].blocks[14].links[0].url"} {
+		if resp.StatusCode != http.StatusUnprocessableEntity || !strings.Contains(string(out), want) {
+			t.Fatalf("bad save lacks %s: %d %s", want, resp.StatusCode, out)
+		}
 	}
 	c = subpage.Default()
-	c.Look.Palette, c.Look.Mode, c.Look.Accent = "forest", "system", "brand"
+	c.Templates[4].ID = "retro"
+	resp, out = h.do(http.MethodPut, api+"/sub-page", map[string]any{"config": c}, csrf)
+	if resp.StatusCode != http.StatusUnprocessableEntity || !strings.Contains(string(out), "template_id_invalid") {
+		t.Fatalf("an unknown template: %d %s", resp.StatusCode, out)
+	}
+	banner := pngBytes(200)
+	for _, name := range []string{"banner-sale", "banner-old"} {
+		if resp, out := upload(name, banner); resp.StatusCode != http.StatusOK {
+			t.Fatalf("%s: %d %s", name, resp.StatusCode, out)
+		}
+	}
+	c = subpage.Default()
+	c.Active = "classic"
+	cl := &c.Templates[1]
+	cl.Look.BrandAccent = true
 	c.Brand = subpage.PageBrand{Logo: "image", Subtitle: "Быстро и тихо"}
 	c.OG = subpage.PageOG{Title: "Mikan VPN", Description: "Подписка", Image: true}
-	c.CSS = ".card{color:red}</style><script>alert(1)</script>@import url(https://evil.example/x.css);"
-	c.Blocks = append(c.Blocks, subpage.PageBlock{ID: "text-a", Type: subpage.TypeText, On: true, Text: "**Привет**"})
+	cl.CSS = ".card{color:red}</style><script>alert(1)</script>@import url(https://evil.example/x.css);"
+	cl.Texts = []subpage.PageText{{Key: "sub.shop", RU: "Купить", EN: "Buy"}}
+	cl.Banners = []subpage.PageBanner{{ID: "sale", On: true, Title: "Скидка", Image: "banner-sale", Button: subpage.BannerButton{Label: "Купить", URL: "https://example.com"}, Place: "top", Tone: "accent", Where: "all"}}
+	cl.Blocks = append(cl.Blocks, subpage.PageBlock{ID: "text-a", Type: subpage.TypeText, On: true, Text: "**Привет**"})
 	// A block turned off is a draft: it must not reach the page's source.
-	c.Blocks = append(c.Blocks, subpage.PageBlock{ID: "text-b", Type: subpage.TypeText, On: false, Text: "черновик для своих"})
+	cl.Blocks = append(cl.Blocks, subpage.PageBlock{ID: "text-b", Type: subpage.TypeText, On: false, Text: "черновик для своих"})
+	// A template that is not the active one is a draft too.
+	c.Templates[4].Banners = []subpage.PageBanner{{ID: "x", On: true, Title: "неон для своих", Place: "bottom", Tone: "card", Where: "all"}}
 	resp, out = h.do(http.MethodPut, api+"/sub-page", map[string]any{"config": c, "brand": "Mikan", "brand_accent": "#2a813f"}, csrf)
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("save: %d %s", resp.StatusCode, out)
 	}
 	var view struct {
-		Config      subpage.Page       `json:"config"`
-		BrandAccent string             `json:"brand_accent"`
-		Logo        *subpage.PageAsset `json:"logo"`
+		Config      subpage.Page                 `json:"config"`
+		BrandAccent string                       `json:"brand_accent"`
+		Logo        *subpage.PageAsset           `json:"logo"`
+		Images      map[string]subpage.PageAsset `json:"images"`
 	}
-	if json.Unmarshal(out, &view) != nil || view.Config.CSS != ".card{color:red}/style>script>alert(1)/script> none;" || view.BrandAccent != "#2A813F" || view.Logo == nil {
+	if json.Unmarshal(out, &view) != nil || len(view.Config.Templates) != 5 || view.Config.Templates[1].CSS != ".card{color:red}/style>script>alert(1)/script> none;" || view.BrandAccent != "#2A813F" || view.Logo == nil || view.Images["banner-sale"].Hash == "" {
 		t.Fatalf("saved: %s", out)
+	}
+	// The image no template uses any more went with the save.
+	if _, ok := view.Images["banner-old"]; ok {
+		t.Fatalf("an unused banner image kept: %s", out)
 	}
 
 	// Instructions: drafts stay in the admin.
@@ -188,11 +213,12 @@ func TestSubPageEditorEndToEnd(t *testing.T) {
 	// The page: the admin's look, the preview tags, the CSS kept in its style, the list.
 	resp, body := h.do(http.MethodGet, sub, nil, browser)
 	p := pageData(t, body)
-	if p.Brand != "Mikan" || p.Accent != "#2A813F" || p.Logo != "brand/logo?v="+asset.Hash || p.Config.Look.Palette != "forest" || len(p.Docs) != 1 || p.Docs[0].ID != shown || p.Config.CSS != "" {
+	if p.Brand != "Mikan" || p.Accent != "#2A813F" || p.Logo != "brand/logo?v="+asset.Hash || p.Template.ID != "classic" || len(p.Docs) != 1 || p.Docs[0].ID != shown || p.Template.CSS != "" ||
+		len(p.Template.Texts) != 1 || len(p.Template.Banners) != 1 || !strings.HasPrefix(p.Template.Banners[0].Image, "brand/banner-sale?v=") {
 		t.Fatalf("page data: %+v", p)
 	}
-	if bytes.Contains(body, []byte("черновик для своих")) {
-		t.Fatal("a block turned off is in the page")
+	if bytes.Contains(body, []byte("черновик для своих")) || bytes.Contains(body, []byte("неон для своих")) {
+		t.Fatal("a draft is in the page")
 	}
 	for _, want := range []string{`<meta property="og:title" content="Mikan VPN">`, `<meta property="og:image" content="https://203.0.113.10:21355/` + subPath + `/brand/logo?v=` + asset.Hash + `">`, `<style id="mikan-css">.card{color:red}/style>script>alert(1)/script> none;</style>`} {
 		if !bytes.Contains(body, []byte(want)) {
@@ -222,6 +248,12 @@ func TestSubPageEditorEndToEnd(t *testing.T) {
 	}
 	if resp, _ := h.do(http.MethodGet, "/"+subPath+"/brand/background", nil, nil); resp.StatusCode != http.StatusNotFound {
 		t.Fatalf("no background: %d", resp.StatusCode)
+	}
+	if resp, body := h.do(http.MethodGet, "/"+subPath+"/"+p.Template.Banners[0].Image, nil, nil); resp.StatusCode != http.StatusOK || !bytes.Equal(body, banner) {
+		t.Fatalf("banner image: %d", resp.StatusCode)
+	}
+	if resp, _ := h.do(http.MethodGet, "/"+subPath+"/brand/banner-old", nil, nil); resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("an unused banner image: %d", resp.StatusCode)
 	}
 	if resp, _ := h.do(http.MethodGet, "/"+subPath+"/brand/secret", nil, nil); resp.StatusCode != http.StatusNotFound {
 		t.Fatalf("unknown image: %d", resp.StatusCode)
@@ -266,7 +298,7 @@ func TestSubPageEditorEndToEnd(t *testing.T) {
 		t.Fatalf("delete logo: %d", resp.StatusCode)
 	}
 	_, body = h.do(http.MethodGet, sub, nil, browser)
-	if p := pageData(t, body); p.Logo != "" || p.Config.Brand.Logo != "letter" || bytes.Contains(body, []byte("og:image")) {
-		t.Fatalf("without the logo: %+v", p.Config.Brand)
+	if p := pageData(t, body); p.Logo != "" || p.Header.Logo != "letter" || bytes.Contains(body, []byte("og:image")) {
+		t.Fatalf("without the logo: %+v", p.Header)
 	}
 }

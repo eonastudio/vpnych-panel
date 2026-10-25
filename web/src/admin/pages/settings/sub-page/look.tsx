@@ -1,18 +1,17 @@
-// The page's look: palette, colours, font, corners, the background, and the own CSS.
+// A template's look: the scheme and colours, the font and shapes, the background, and its CSS.
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Check, ImageUp } from "lucide-react";
-import { useRef, useState } from "react";
+import { ImageUp } from "lucide-react";
+import { useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { api, errorText, unwrap } from "../../../../api/client";
 import { qk } from "../../../../api/hooks";
-import { foldedList, Mock, themeNames, ThemesToggle, useTilesPerRow } from "../../../../components/theme";
+import { Switch } from "../../../../components/switch";
 import { useToast } from "../../../../components/toast";
 import { Button, Field, Segmented, Skeleton } from "../../../../components/ui";
 import { t } from "../../../../i18n";
 import { fieldErrors } from "../../../../lib/fields";
-import { followsMode, MODE_PALETTES, THEMES } from "../../../../lib/themes";
-import { Card, COLOR, imageURL, LIMITS, MAX_CSS, type Asset, type Config, type Look, type SectionProps, type Set } from "./parts";
+import { assetOf, Card, COLOR, imageName, imageURL, LIMITS, MAX_CSS, type Asset, type Form, type Look, type TemplateProps, type View } from "./parts";
 
-function ColorField({ id, label, value, onChange, error, hint }: { id: string; label: string; value: string; onChange: (v: string) => void; error?: string; hint?: string }) {
+export function ColorField({ id, label, value, onChange, error, hint }: { id: string; label: string; value: string; onChange: (v: string) => void; error?: string; hint?: string }) {
   const valid = COLOR.test(value.trim());
   return (
     <Field label={label} htmlFor={id} error={error ?? (value.trim() && !valid ? t("settings.page.colorInvalid") : undefined)} hint={hint}>
@@ -30,88 +29,75 @@ function ColorField({ id, label, value, onChange, error, hint }: { id: string; l
   );
 }
 
-export function LookSection({ draft, setDraft, set, errors, accentMissing, background }: SectionProps & { accentMissing: boolean; background?: Asset }) {
-  const look = draft.config.look;
-  const setLook = (patch: Partial<Look>) => set((c) => ({ ...c, look: { ...c.look, ...patch } }));
+const FONTS: { id: Look["font"]; family: string }[] = [
+  { id: "inter", family: '"Inter", system-ui, sans-serif' },
+  { id: "onest", family: '"Onest Variable", system-ui, sans-serif' },
+  { id: "unbounded", family: '"Unbounded Variable", "Onest Variable", system-ui, sans-serif' },
+  { id: "system", family: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' },
+  { id: "rounded", family: 'ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif' },
+  { id: "mono", family: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace' },
+];
+
+const COLORS: { key: "bg" | "bg2" | "card" | "text" | "muted" | "accent" | "accent2" | "danger" }[] = [
+  { key: "bg" },
+  { key: "bg2" },
+  { key: "card" },
+  { key: "text" },
+  { key: "muted" },
+  { key: "accent" },
+  { key: "accent2" },
+  { key: "danger" },
+];
+
+type LookProps = TemplateProps & { v: View; draft: Form; setDraft: Dispatch<SetStateAction<Form>>; accentMissing: boolean };
+
+export function LookSection({ tpl, setTpl, errors, at, v, draft, setDraft, accentMissing }: LookProps) {
+  const look = tpl.look;
+  const setLook = (patch: Partial<Look>) => setTpl((x) => ({ ...x, look: { ...x.look, ...patch } }));
   const bg = look.background;
   const setBg = (patch: Partial<Look["background"]>) => setLook({ background: { ...bg, ...patch } });
-  const names = themeNames();
-  const [themesOpen, setThemesOpen] = useState(false);
-  const [themeRows, perRow] = useTilesPerRow();
-  // The four that follow the page's light/dark mode, then every other panel theme as it is.
-  const moded = MODE_PALETTES.map((id) => ({ id, label: names[id], theme: id === "mikan" && look.mode === "dark" ? ("midnight" as const) : id }));
-  const fixed = THEMES.filter((id) => !followsMode(id) && id !== "midnight").map((id) => ({ id, label: names[id], theme: id }));
-  const fonts: { id: Look["font"]; family: string }[] = [
-    { id: "default", family: '"Unbounded Variable", "Onest Variable", system-ui, sans-serif' },
-    { id: "onest", family: '"Onest Variable", system-ui, sans-serif' },
-    { id: "system", family: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' },
-    { id: "rounded", family: 'ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif' },
-  ];
+  const err = (field: string) => errors[`${at}.look.${field}`];
+  const bgName = imageName("bg", tpl.id);
   return (
     <>
-      <Card title={t("settings.page.theme")} sub={t("settings.page.themeSub")}>
-        <div ref={themeRows} role="radiogroup" aria-label={t("settings.page.theme")} className="mb-4 flex flex-col gap-4">
-          {[
-            { label: t("settings.page.themesModed"), list: moded },
-            { label: t("settings.page.themesFixed"), list: fixed },
-          ].map((g) => (
-            <div key={g.label} role="group" aria-label={g.label}>
-              <div className="theme-group-label">{g.label}</div>
-              <div className="theme-tiles">
-                {foldedList(g.list, look.palette, themesOpen, perRow).map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={look.palette === p.id}
-                    aria-label={p.theme === "midnight" ? names.midnight : p.label}
-                    className="theme-tile"
-                    onClick={() => setLook({ palette: p.id as Look["palette"] })}
-                  >
-                    <Mock theme={p.theme} />
-                    <span className="theme-tile-name">
-                      <span>{p.theme === "midnight" ? names.midnight : p.label}</span>
-                      {look.palette === p.id ? <Check size={14} aria-hidden /> : null}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-          {themesOpen || fixed.length > perRow || moded.length > perRow ? (
-            <ThemesToggle open={themesOpen} total={moded.length + fixed.length} onToggle={() => setThemesOpen((v) => !v)} />
-          ) : null}
-        </div>
-        {followsMode(look.palette) ? (
-        <Field label={t("settings.page.mode")} hint={look.mode === "system" ? t("settings.page.modeSystemHint") : undefined}>
+      <Card title={t("settings.page.tpl.colors")} sub={t("settings.page.tpl.colorsSub")}>
+        <Field label={t("settings.page.tpl.scheme")} hint={t("settings.page.tpl.schemeHint")}>
           <Segmented
-            label={t("settings.page.mode")}
-            value={look.mode}
-            onChange={(mode) => setLook({ mode })}
+            label={t("settings.page.tpl.scheme")}
+            value={look.scheme}
+            onChange={(scheme) => setLook({ scheme })}
             options={[
-              { value: "light", label: t("settings.page.modeLight") },
               { value: "dark", label: t("settings.page.modeDark") },
-              { value: "system", label: t("settings.page.modeSystem") },
+              { value: "light", label: t("settings.page.modeLight") },
             ]}
           />
         </Field>
-        ) : null}
-        <Field label={t("settings.page.accent")} hint={t("settings.page.accentHint")}>
-          <Segmented
-            label={t("settings.page.accent")}
-            value={look.accent}
-            onChange={(accent) => {
-              setLook({ accent });
-              // The brand's colour starts as the palette's, not as an empty field to fill.
-              if (accent === "brand" && !COLOR.test(draft.brand_accent.trim())) setDraft((d) => ({ ...d, brand_accent: "#1F9E8E" }));
+        <div className="grid gap-x-3 sm:grid-cols-2">
+          {COLORS.map(({ key }) =>
+            key === "accent" && look.brand_accent ? null : (
+              <ColorField key={key} id={`sp-c-${key}`} label={t(`settings.page.tpl.color.${key}`)} value={look[key]} onChange={(val) => setLook({ [key]: val } as Partial<Look>)} error={err(key)} />
+            ),
+          )}
+        </div>
+        <Field label={t("settings.page.tpl.cardAlpha", { n: look.card_alpha })} htmlFor="sp-card-alpha" hint={t("settings.page.tpl.cardAlphaHint")}>
+          <input id="sp-card-alpha" type="range" min={0} max={100} step={5} value={look.card_alpha} onChange={(e) => setLook({ card_alpha: Number(e.target.value) })} className="w-full accent-[var(--mikan-500)]" />
+        </Field>
+        <div className="flex items-center justify-between gap-3 py-1">
+          <div>
+            <div className="text-[13px] font-semibold">{t("settings.page.accentBrand")}</div>
+            <div className="text-xs text-[var(--ink-500)]">{t("settings.page.tpl.brandAccentHint")}</div>
+          </div>
+          <Switch
+            checked={look.brand_accent}
+            label={t("settings.page.accentBrand")}
+            onChange={(on) => {
+              setLook({ brand_accent: on });
+              // The brand's colour starts as the template's, not as an empty field to fill.
+              if (on && !COLOR.test(draft.brand_accent.trim())) setDraft((d) => ({ ...d, brand_accent: look.accent }));
             }}
-            options={[
-              { value: "theme", label: t("settings.page.accentTheme") },
-              { value: "brand", label: t("settings.page.accentBrand") },
-            ]}
           />
-        </Field>
-        {look.accent === "brand" ? (
+        </div>
+        {look.brand_accent ? (
           <ColorField
             id="sp-accent"
             label={t("settings.brandAccent")}
@@ -123,18 +109,61 @@ export function LookSection({ draft, setDraft, set, errors, accentMissing, backg
         ) : null}
       </Card>
 
+      <Card title={t("settings.page.type")} sub={t("settings.page.typeSub")}>
+        <Field label={t("settings.page.font")}>
+          <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label={t("settings.page.font")}>
+            {FONTS.map((f) => (
+              <button key={f.id} type="button" role="radio" aria-checked={look.font === f.id} className="opt" onClick={() => setLook({ font: f.id })}>
+                <span className="text-[17px] leading-6 font-medium" style={{ fontFamily: f.family }}>
+                  {t("settings.page.fontSample")}
+                </span>
+                <span className="text-xs text-[var(--ink-500)]">{t(`settings.page.tpl.font.${f.id}`)}</span>
+              </button>
+            ))}
+          </div>
+        </Field>
+        <div className="grid gap-x-6 sm:grid-cols-2">
+          <Field label={t("settings.page.tpl.headings")}>
+            <Segmented
+              label={t("settings.page.tpl.headings")}
+              value={look.headings}
+              onChange={(headings) => setLook({ headings })}
+              options={[
+                { value: "italic", label: t("settings.page.tpl.headingsItalic") },
+                { value: "regular", label: t("settings.page.tpl.headingsRegular") },
+              ]}
+            />
+          </Field>
+          <Field label={t("settings.page.tpl.radius", { n: look.radius })} htmlFor="sp-radius">
+            <input id="sp-radius" type="range" min={0} max={40} step={2} value={look.radius} onChange={(e) => setLook({ radius: Number(e.target.value) })} className="w-full accent-[var(--mikan-500)]" />
+          </Field>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex items-center justify-between gap-3">
+            <span>
+              <span className="block text-[13px] font-semibold">{t("settings.page.tpl.glass")}</span>
+              <span className="block text-xs text-[var(--ink-500)]">{t("settings.page.cardsGlassHint")}</span>
+            </span>
+            <Switch checked={look.glass} label={t("settings.page.tpl.glass")} onChange={(glass) => setLook({ glass })} />
+          </label>
+          <label className="flex items-center justify-between gap-3">
+            <span>
+              <span className="block text-[13px] font-semibold">{t("settings.page.tpl.glow")}</span>
+              <span className="block text-xs text-[var(--ink-500)]">{t("settings.page.tpl.glowHint")}</span>
+            </span>
+            <Switch checked={look.glow} label={t("settings.page.tpl.glow")} onChange={(glow) => setLook({ glow })} />
+          </label>
+        </div>
+      </Card>
+
       <Card title={t("settings.page.background")} sub={t("settings.page.backgroundSub")}>
-        <Field label={t("settings.page.backgroundKind")} error={errors["config.look.background.kind"]}>
+        <Field label={t("settings.page.backgroundKind")} error={err("background.kind")}>
           <Segmented
             label={t("settings.page.backgroundKind")}
             value={bg.kind}
-            onChange={(kind) => {
-              // A first colour or gradient starts from the theme's own background.
-              const dark = look.mode === "dark";
-              setBg({ kind, from: bg.from || (kind === "image" ? "" : dark ? "#0B141B" : "#EAF4F2"), to: bg.to || (kind === "gradient" ? (dark ? "#3A2418" : "#FFCBA6") : "") });
-            }}
+            onChange={(kind) => setBg({ kind, from: bg.from || (kind === "solid" || kind === "gradient" ? look.bg2 : ""), to: bg.to || (kind === "gradient" ? look.bg : "") })}
             options={[
-              { value: "theme", label: t("settings.page.bgTheme") },
+              { value: "theme", label: t("settings.page.tpl.bgTemplate") },
               { value: "solid", label: t("settings.page.bgSolid") },
               { value: "gradient", label: t("settings.page.bgGradient") },
               { value: "image", label: t("settings.page.bgImage") },
@@ -143,8 +172,8 @@ export function LookSection({ draft, setDraft, set, errors, accentMissing, backg
         </Field>
         {bg.kind === "solid" || bg.kind === "gradient" ? (
           <div className="grid gap-x-3 sm:grid-cols-2">
-            <ColorField id="sp-bg-from" label={bg.kind === "solid" ? t("settings.page.bgColor") : t("settings.page.bgFrom")} value={bg.from} onChange={(from) => setBg({ from })} error={errors["config.look.background.from"]} />
-            {bg.kind === "gradient" ? <ColorField id="sp-bg-to" label={t("settings.page.bgTo")} value={bg.to} onChange={(to) => setBg({ to })} error={errors["config.look.background.to"]} /> : null}
+            <ColorField id="sp-bg-from" label={bg.kind === "solid" ? t("settings.page.bgColor") : t("settings.page.bgFrom")} value={bg.from} onChange={(from) => setBg({ from })} error={err("background.from")} />
+            {bg.kind === "gradient" ? <ColorField id="sp-bg-to" label={t("settings.page.bgTo")} value={bg.to} onChange={(to) => setBg({ to })} error={err("background.to")} /> : null}
           </div>
         ) : null}
         {bg.kind === "gradient" ? (
@@ -154,59 +183,44 @@ export function LookSection({ draft, setDraft, set, errors, accentMissing, backg
         ) : null}
         {bg.kind === "image" ? (
           <>
-            <ImageField name="background" asset={background} label={t("settings.page.bgImage")} hint={t("settings.page.bgImageHint")} />
+            <ImageField
+              name={bg.image || bgName}
+              asset={assetOf(v, bg.image)}
+              limit={LIMITS.background}
+              label={t("settings.page.bgImage")}
+              hint={t("settings.page.bgImageHint")}
+              onUploaded={(name) => setBg({ image: name })}
+              onRemoved={() => setBg({ image: "" })}
+            />
             <Field label={t("settings.page.bgDim", { n: bg.dim })} htmlFor="sp-bg-dim" hint={t("settings.page.bgDimHint")}>
               <input id="sp-bg-dim" type="range" min={0} max={80} step={5} value={bg.dim} onChange={(e) => setBg({ dim: Number(e.target.value) })} className="w-full accent-[var(--mikan-500)]" />
             </Field>
           </>
         ) : null}
       </Card>
-
-      <Card title={t("settings.page.type")} sub={t("settings.page.typeSub")}>
-        <Field label={t("settings.page.font")}>
-          <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label={t("settings.page.font")}>
-            {fonts.map((f) => (
-              <button key={f.id} type="button" role="radio" aria-checked={look.font === f.id} className="opt" onClick={() => setLook({ font: f.id })}>
-                <span className="text-[17px] leading-6 font-medium" style={{ fontFamily: f.family }}>
-                  {t("settings.page.fontSample")}
-                </span>
-                <span className="text-xs text-[var(--ink-500)]">{t(`settings.page.fonts.${f.id}`)}</span>
-              </button>
-            ))}
-          </div>
-        </Field>
-        <div className="grid gap-x-6 sm:grid-cols-2">
-          <Field label={t("settings.page.radius")}>
-            <Segmented
-              label={t("settings.page.radius")}
-              value={look.radius}
-              onChange={(radius) => setLook({ radius })}
-              options={[
-                { value: "small", label: t("settings.page.radiusSmall") },
-                { value: "medium", label: t("settings.page.radiusMedium") },
-                { value: "large", label: t("settings.page.radiusLarge") },
-              ]}
-            />
-          </Field>
-          <Field label={t("settings.page.cards")} hint={look.cards === "solid" ? t("settings.page.cardsSolidHint") : t("settings.page.cardsGlassHint")}>
-            <Segmented
-              label={t("settings.page.cards")}
-              value={look.cards}
-              onChange={(cards) => setLook({ cards })}
-              options={[
-                { value: "glass", label: t("settings.page.cardsGlass") },
-                { value: "solid", label: t("settings.page.cardsSolid") },
-              ]}
-            />
-          </Field>
-        </div>
-      </Card>
     </>
   );
 }
 
-/** An image of the page (the logo, the background): uploaded at once, sniffed by the server. */
-export function ImageField({ name, asset, label, hint }: { name: "logo" | "background"; asset?: Asset; label: string; hint: string }) {
+/** An image of the page (the logo, a background, a banner's): uploaded at once, sniffed by the server. */
+export function ImageField({
+  name,
+  asset,
+  label,
+  hint,
+  limit = LIMITS.logo,
+  onUploaded,
+  onRemoved,
+}: {
+  name: string;
+  asset?: Asset;
+  label: string;
+  hint: string;
+  /** The largest file, KB. */
+  limit?: number;
+  onUploaded?: (name: string) => void;
+  onRemoved?: () => void;
+}) {
   const qc = useQueryClient();
   const toast = useToast();
   const input = useRef<HTMLInputElement>(null);
@@ -223,12 +237,16 @@ export function ImageField({ name, asset, label, hint }: { name: "logo" | "backg
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: qk.subPage });
+      onUploaded?.(name);
       toast.ok(t("settings.page.imageUploaded"));
     },
   });
   const remove = useMutation({
     mutationFn: () => unwrap(api.DELETE("/api/v1/sub-page/images/{name}", { params: { path: { name } } })),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: qk.subPage }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: qk.subPage });
+      onRemoved?.();
+    },
     onError: (e) => toast.error(errorText(e)),
   });
   const pick = (file?: File) => {
@@ -236,7 +254,7 @@ export function ImageField({ name, asset, label, hint }: { name: "logo" | "backg
     upload.reset();
     if (!file) return;
     if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) setLocal(t("errors.api.image_type"));
-    else if (file.size > LIMITS[name] * 1024) setLocal(t("errors.api.image_too_big", { value: LIMITS[name] }));
+    else if (file.size > limit * 1024) setLocal(t("errors.api.image_too_big", { value: limit }));
     else upload.mutate(file);
   };
   const error = local || (upload.error ? (fieldErrors(upload.error).data ?? errorText(upload.error)) : "");
@@ -282,8 +300,9 @@ export function ImageField({ name, asset, label, hint }: { name: "logo" | "backg
   );
 }
 
-export function CSSSection({ config, set, error }: { config: Config; set: Set; error?: string }) {
-  const size = new Blob([config.css]).size;
+export function CSSSection({ tpl, setTpl, errors, at }: TemplateProps) {
+  const size = new Blob([tpl.css]).size;
+  const error = errors[`${at}.css`];
   return (
     <Card title={t("settings.page.css")} sub={t("settings.page.cssSub")}>
       <Field label={t("settings.page.cssField")} htmlFor="sp-css" hint={t("settings.page.cssHint", { size: size.toLocaleString(), max: MAX_CSS.toLocaleString() })} error={error ?? (size > MAX_CSS ? t("errors.api.too_long", { value: MAX_CSS }) : undefined)}>
@@ -291,10 +310,10 @@ export function CSSSection({ config, set, error }: { config: Config; set: Set; e
           id="sp-css"
           className="input mono"
           rows={16}
-          value={config.css}
+          value={tpl.css}
           spellCheck={false}
           placeholder={".sub-look .glass {\n  border-width: 2px;\n}"}
-          onChange={(e) => set((c) => ({ ...c, css: e.target.value }))}
+          onChange={(e) => setTpl((x) => ({ ...x, css: e.target.value }))}
           aria-invalid={!!error || size > MAX_CSS}
         />
       </Field>

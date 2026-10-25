@@ -27,6 +27,8 @@ let locale: Locale = detect();
 let loaders: Loaders<Partial<Dict>> | undefined;
 const loaded: Partial<Record<Locale, unknown>> = {};
 const listeners = new Set<() => void>();
+// The subscription page template's own texts (sub.*), over the dictionary's.
+let overrides: Record<string, Partial<Record<Locale, string>>> = {};
 
 /** The visitor's own choice, then the panel's default language (the server puts it in
  * the page, see server/spa.go), then the browser's. */
@@ -84,8 +86,24 @@ export function useLocale(): Locale {
   return useSyncExternalStore(subscribe, getLocale);
 }
 
+/**
+ * Texts of the page's template in place of the dictionary's, by key: an empty one keeps the
+ * dictionary's. Components re-render as on a language switch.
+ */
+export function overrideTexts(list: { key: string; ru: string; en: string }[]): void {
+  const next: typeof overrides = {};
+  for (const x of list) next[x.key] = { ru: x.ru.trim() ? x.ru : undefined, en: x.en.trim() ? x.en : undefined };
+  overrides = next;
+  listeners.forEach((f) => f());
+}
+
+/** The dictionary's own text, without the template's (the editor shows it as the usual one). */
+export function tDefault(key: string): string | undefined {
+  return lookup(loaded[locale], key);
+}
+
 export function t(key: Key, params?: Params): string {
-  const s = lookup(loaded[locale], key);
+  const s = overrides[key]?.[locale] ?? lookup(loaded[locale], key);
   if (s === undefined) {
     if (import.meta.env.DEV) console.warn(`i18n: no "${key}" in the ${locale} dictionary of this page`);
     return key;
@@ -95,7 +113,7 @@ export function t(key: Key, params?: Params): string {
 
 /** For keys built at runtime (API error codes, preset ids): undefined when missing. */
 export function tMaybe(key: string, params?: Params): string | undefined {
-  const s = lookup(loaded[locale], key);
+  const s = overrides[key]?.[locale] ?? lookup(loaded[locale], key);
   return s === undefined ? undefined : params ? format(s, params) : s;
 }
 

@@ -1,4 +1,5 @@
 import "../styles/app.css";
+import "../styles/fonts-inter.css";
 import "../styles/fonts-mono.css";
 import "./look.css";
 import { StrictMode, useCallback, useEffect, useRef, useState } from "react";
@@ -42,7 +43,7 @@ const page = readPage();
 const pageRoot = new URL(".", document.baseURI).href.replace(/\/$/, "");
 const asset = (path?: string) => (path ? pageRoot + "/" + path : undefined);
 applyLook(page, asset);
-const config = page.config;
+const template = page.template;
 
 function SubPage() {
   // Texts are read at render time: follow a language switch without remounting the page
@@ -278,7 +279,7 @@ function SubPage() {
   // traffic's and each group's. It moves to them, so only while the shop block that holds them
   // is on; the keyboard and the screen reader go there too: the section's heading takes the focus.
   const onSale = packages && packages.token === token ? (packages.data.packages ?? []) : [];
-  const shopOn = config.blocks.some((b) => b.type === "shop" && b.on);
+  const shopOn = template.blocks.some((b) => b.type === "shop" && b.on);
   const buy = tgMode && onSale.length && shopOn
     ? {
         main: onSale.some((o) => !o.pool),
@@ -345,7 +346,7 @@ function SubPage() {
         {freePlan}
         {plansForNew ? (
           <>
-            <PromoSection token="" activeCode={promoCode} onApplied={(c) => setPromoCode(c)} onBonusApplied={refresh} title={titleOf(config, "promo")} />
+            <PromoSection token="" activeCode={promoCode} onApplied={(c) => setPromoCode(c)} onBonusApplied={refresh} title={titleOf(template, "promo")} />
             {shopFor("", t("sub.shopNew"))}
           </>
         ) : null}
@@ -434,18 +435,20 @@ function SubPage() {
         </div>
       ) : null}
       <PageBlocks
-        config={config}
+        template={template}
+        apps={page.apps}
+        asset={asset}
         info={current}
         subURL={subURL}
         tgMode={tgMode}
         docs={page.docs}
         selling={tgMode && !!shop?.offers.length}
         buy={buy}
-        promo={tgMode ? <PromoSection token={subURL} activeCode={promoCode} onApplied={(c) => setPromoCode(c)} onBonusApplied={refresh} title={titleOf(config, "promo")} /> : null}
+        promo={tgMode ? <PromoSection token={subURL} activeCode={promoCode} onApplied={(c) => setPromoCode(c)} onBonusApplied={refresh} title={titleOf(template, "promo")} /> : null}
         shop={
           tgMode ? (
             <>
-              {shopFor(token, titleOf(config, "shop") || t("sub.shop"))}
+              {shopFor(token, titleOf(template, "shop") || t("sub.shop"))}
               {packagesShop ? <div id="sub-packages" className="scroll-mt-4">{packagesShop}</div> : null}
               {deviceShop}
               {freePlan}
@@ -458,7 +461,7 @@ function SubPage() {
               key={token}
               info={current}
               subURL={subURL}
-              title={titleOf(config, "reissue")}
+              title={titleOf(template, "reissue")}
               onDone={(newToken) => {
                 // The page opens at the new address; the sign-in's list is told afterwards, so that
                 // it finds the new link among the account's and keeps it on screen.
@@ -477,7 +480,7 @@ function SubPage() {
 
 function Shell({ brand, children }: { brand?: string; children: React.ReactNode }) {
   return (
-    <PageShell config={config} brand={brand ?? page.brand} logo={asset(page.logo)} right={<LangSwitch className="ml-auto" />}>
+    <PageShell head={page.head} brand={brand ?? page.brand} logo={asset(page.logo)} right={<LangSwitch className="ml-auto" />}>
       {children}
     </PageShell>
   );
@@ -490,7 +493,7 @@ void initI18n(subDicts).then(() => {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <ErrorBoundary>
-        <PageBackdrop look={config.look} image={asset(page.background)} />
+        <PageBackdrop look={template.look} image={asset(page.background)} />
         <SubPage />
       </ErrorBoundary>
     </StrictMode>,

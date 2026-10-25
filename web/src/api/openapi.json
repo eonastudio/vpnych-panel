@@ -1101,6 +1101,25 @@
         ],
         "type": "object"
       },
+      "BannerButton": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "maxLength": 40,
+            "type": "string"
+          },
+          "url": {
+            "description": "https://, http:// или tg://",
+            "maxLength": 500,
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "url"
+        ],
+        "type": "object"
+      },
       "BotSlotInputBody": {
         "additionalProperties": false,
         "properties": {
@@ -5296,39 +5315,35 @@
       "Page": {
         "additionalProperties": false,
         "properties": {
+          "active": {
+            "description": "Шаблон, который видят подписчики",
+            "maxLength": 16,
+            "type": "string"
+          },
           "apps": {
             "$ref": "#/components/schemas/PageApps"
-          },
-          "blocks": {
-            "description": "Блоки страницы в их порядке; встроенные — по одному, своих (text, links) — до 12",
-            "items": {
-              "$ref": "#/components/schemas/PageBlock"
-            },
-            "maxItems": 40,
-            "type": "array"
           },
           "brand": {
             "$ref": "#/components/schemas/PageBrand"
           },
-          "css": {
-            "description": "Свой CSS страницы подписки (не админки), до 20 КБ; @import и \u003c убираются",
-            "maxLength": 20480,
-            "type": "string"
-          },
-          "look": {
-            "$ref": "#/components/schemas/PageLook"
-          },
           "og": {
             "$ref": "#/components/schemas/PageOG"
+          },
+          "templates": {
+            "description": "Встроенные шаблоны и свои (до 8); не показанные — черновики",
+            "items": {
+              "$ref": "#/components/schemas/Template"
+            },
+            "maxItems": 16,
+            "type": "array"
           }
         },
         "required": [
-          "look",
+          "active",
+          "templates",
           "brand",
-          "blocks",
           "apps",
-          "og",
-          "css"
+          "og"
         ],
         "type": "object"
       },
@@ -5432,50 +5447,88 @@
         ],
         "type": "object"
       },
-      "PageBackground": {
+      "PageBanner": {
         "additionalProperties": false,
         "properties": {
-          "angle": {
-            "description": "Направление градиента в градусах",
-            "format": "int64",
-            "maximum": 359,
-            "minimum": 0,
-            "type": "integer"
-          },
-          "dim": {
-            "description": "Затемнение картинки, %",
-            "format": "int64",
-            "maximum": 80,
-            "minimum": 0,
-            "type": "integer"
-          },
-          "from": {
-            "description": "#RRGGBB",
-            "maxLength": 7,
+          "after": {
+            "maxLength": 24,
             "type": "string"
           },
-          "kind": {
-            "description": "theme — фон темы, solid — цвет from, gradient — от from к to, image — загруженная картинка",
+          "button": {
+            "$ref": "#/components/schemas/BannerButton"
+          },
+          "from": {
+            "description": "Показывать с (unix-время); 0 — сразу",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "id": {
+            "maxLength": 12,
+            "type": "string"
+          },
+          "image": {
+            "description": "Загруженная картинка banner-\u003cx\u003e; пусто — без неё",
+            "maxLength": 48,
+            "type": "string"
+          },
+          "on": {
+            "type": "boolean"
+          },
+          "place": {
+            "description": "top — над блоками, bottom — под ними, after — после блока after",
             "enum": [
-              "theme",
-              "solid",
-              "gradient",
-              "image"
+              "top",
+              "bottom",
+              "after"
             ],
             "type": "string"
           },
-          "to": {
-            "description": "#RRGGBB",
-            "maxLength": 7,
+          "text": {
+            "maxLength": 300,
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 80,
+            "type": "string"
+          },
+          "tone": {
+            "enum": [
+              "accent",
+              "card",
+              "warning"
+            ],
+            "type": "string"
+          },
+          "until": {
+            "description": "Показывать до (unix-время); 0 — всегда",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "where": {
+            "description": "Где показывать: везде, только в Mini App, только в браузере",
+            "enum": [
+              "all",
+              "miniapp",
+              "browser"
+            ],
             "type": "string"
           }
         },
         "required": [
-          "kind",
+          "id",
+          "on",
+          "title",
+          "text",
+          "image",
+          "button",
+          "place",
+          "after",
           "from",
-          "to",
-          "angle",
-          "dim"
+          "until",
+          "tone",
+          "where"
         ],
         "type": "object"
       },
@@ -5590,93 +5643,6 @@
         ],
         "type": "object"
       },
-      "PageLook": {
-        "additionalProperties": false,
-        "properties": {
-          "accent": {
-            "description": "theme — цвет палитры, brand — цвет бренда (brand_accent)",
-            "enum": [
-              "theme",
-              "brand"
-            ],
-            "type": "string"
-          },
-          "background": {
-            "$ref": "#/components/schemas/PageBackground"
-          },
-          "cards": {
-            "description": "glass — полупрозрачные карточки, solid — непрозрачные",
-            "enum": [
-              "glass",
-              "solid"
-            ],
-            "type": "string"
-          },
-          "font": {
-            "description": "default — Unbounded и Onest, onest — только Onest, system — шрифт устройства, rounded — скруглённый системный",
-            "enum": [
-              "default",
-              "onest",
-              "system",
-              "rounded"
-            ],
-            "type": "string"
-          },
-          "mode": {
-            "description": "light, dark (как Midnight) или system — как у посетителя",
-            "enum": [
-              "light",
-              "dark",
-              "system"
-            ],
-            "type": "string"
-          },
-          "palette": {
-            "description": "Тема, как темы панели. mikan, ocean, sakura и forest следуют mode; остальные светлые или тёмные сами",
-            "enum": [
-              "mikan",
-              "ocean",
-              "sakura",
-              "forest",
-              "latte",
-              "snow",
-              "dawn",
-              "dune",
-              "graphite",
-              "abyss",
-              "ember",
-              "plum",
-              "moss",
-              "terminal",
-              "nord",
-              "mocha",
-              "tokyo",
-              "dracula",
-              "aurora",
-              "cosmos"
-            ],
-            "type": "string"
-          },
-          "radius": {
-            "enum": [
-              "small",
-              "medium",
-              "large"
-            ],
-            "type": "string"
-          }
-        },
-        "required": [
-          "palette",
-          "mode",
-          "accent",
-          "background",
-          "font",
-          "radius",
-          "cards"
-        ],
-        "type": "object"
-      },
       "PageOG": {
         "additionalProperties": false,
         "properties": {
@@ -5698,6 +5664,30 @@
           "title",
           "description",
           "image"
+        ],
+        "type": "object"
+      },
+      "PageText": {
+        "additionalProperties": false,
+        "properties": {
+          "en": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "key": {
+            "description": "Ключ словаря, sub.…",
+            "maxLength": 84,
+            "type": "string"
+          },
+          "ru": {
+            "maxLength": 500,
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "ru",
+          "en"
         ],
         "type": "object"
       },
@@ -7266,7 +7256,7 @@
         "additionalProperties": false,
         "properties": {
           "data": {
-            "description": "Картинка в base64: PNG, JPEG или WebP; логотип до 512 КБ, фон до 2 МБ. SVG не принимается",
+            "description": "Картинка в base64: PNG, JPEG или WebP; логотип до 512 КБ, фон до 2 МБ, баннер до 1 МБ. SVG не принимается",
             "maxLength": 2800000,
             "minLength": 1,
             "type": "string"
@@ -8968,6 +8958,13 @@
             "$ref": "#/components/schemas/Page",
             "description": "Страница по умолчанию — к ней ведёт «Сбросить»"
           },
+          "images": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PageAsset"
+            },
+            "description": "Загруженные картинки шаблонов (фоны bg-* и background, баннеры banner-*) по имени",
+            "type": "object"
+          },
           "logo": {
             "$ref": "#/components/schemas/PageAsset"
           }
@@ -8976,7 +8973,8 @@
           "config",
           "defaults",
           "brand",
-          "brand_accent"
+          "brand_accent",
+          "images"
         ],
         "type": "object"
       },
@@ -9738,6 +9736,245 @@
           "route",
           "infrastructure",
           "admin_chat_set"
+        ],
+        "type": "object"
+      },
+      "Template": {
+        "additionalProperties": false,
+        "properties": {
+          "banners": {
+            "items": {
+              "$ref": "#/components/schemas/PageBanner"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "base": {
+            "description": "Встроенный шаблон, к которому ведёт «Сбросить»",
+            "enum": [
+              "vpnych",
+              "classic",
+              "light",
+              "minimal",
+              "neon"
+            ],
+            "type": "string"
+          },
+          "blocks": {
+            "description": "Блоки в их порядке; встроенные — по одному, своих (text, links) — до 12",
+            "items": {
+              "$ref": "#/components/schemas/PageBlock"
+            },
+            "maxItems": 40,
+            "type": "array"
+          },
+          "css": {
+            "description": "Свой CSS шаблона, до 20 КБ; @import и \u003c убираются",
+            "maxLength": 20480,
+            "type": "string"
+          },
+          "id": {
+            "description": "Встроенные: vpnych, classic, light, minimal, neon; свои: own-\u003cx\u003e",
+            "maxLength": 16,
+            "type": "string"
+          },
+          "look": {
+            "$ref": "#/components/schemas/TemplateLook"
+          },
+          "name": {
+            "description": "Название в редакторе; пусто — название встроенного",
+            "maxLength": 40,
+            "type": "string"
+          },
+          "texts": {
+            "description": "Свои тексты и надписи кнопок вместо обычных, по ключам словаря sub.*",
+            "items": {
+              "$ref": "#/components/schemas/PageText"
+            },
+            "maxItems": 400,
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "base",
+          "look",
+          "blocks",
+          "texts",
+          "banners",
+          "css"
+        ],
+        "type": "object"
+      },
+      "TemplateBackground": {
+        "additionalProperties": false,
+        "properties": {
+          "angle": {
+            "format": "int64",
+            "maximum": 359,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "dim": {
+            "description": "Затемнение картинки, %",
+            "format": "int64",
+            "maximum": 80,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "from": {
+            "maxLength": 7,
+            "type": "string"
+          },
+          "image": {
+            "description": "Загруженная картинка: background или bg-\u003cx\u003e",
+            "maxLength": 40,
+            "type": "string"
+          },
+          "kind": {
+            "description": "theme — от bg2 к bg, solid — цвет from, gradient — от from к to, image — картинка image",
+            "enum": [
+              "theme",
+              "solid",
+              "gradient",
+              "image"
+            ],
+            "type": "string"
+          },
+          "to": {
+            "maxLength": 7,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "from",
+          "to",
+          "angle",
+          "dim",
+          "image"
+        ],
+        "type": "object"
+      },
+      "TemplateLook": {
+        "additionalProperties": false,
+        "properties": {
+          "accent": {
+            "description": "Кнопки и акценты",
+            "maxLength": 7,
+            "type": "string"
+          },
+          "accent2": {
+            "description": "Второй цвет акцента (градиент кнопок)",
+            "maxLength": 7,
+            "type": "string"
+          },
+          "background": {
+            "$ref": "#/components/schemas/TemplateBackground"
+          },
+          "bg": {
+            "description": "Фон, #RRGGBB",
+            "maxLength": 7,
+            "type": "string"
+          },
+          "bg2": {
+            "description": "Второй цвет фона (верх градиента и шапка Telegram)",
+            "maxLength": 7,
+            "type": "string"
+          },
+          "brand_accent": {
+            "description": "Акцент — цвет бренда (brand_accent) вместо accent",
+            "type": "boolean"
+          },
+          "card": {
+            "description": "Карточки",
+            "maxLength": 7,
+            "type": "string"
+          },
+          "card_alpha": {
+            "description": "Непрозрачность карточек, %",
+            "format": "int64",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "danger": {
+            "description": "Ошибки и предупреждения",
+            "maxLength": 7,
+            "type": "string"
+          },
+          "font": {
+            "description": "unbounded — заголовки Unbounded, текст Onest",
+            "enum": [
+              "inter",
+              "onest",
+              "unbounded",
+              "system",
+              "rounded",
+              "mono"
+            ],
+            "type": "string"
+          },
+          "glass": {
+            "description": "Стеклянные карточки (размытие под ними)",
+            "type": "boolean"
+          },
+          "glow": {
+            "description": "Свечение акцента на фоне",
+            "type": "boolean"
+          },
+          "headings": {
+            "description": "italic — курсивом заглавными, как ВПНыч",
+            "enum": [
+              "italic",
+              "regular"
+            ],
+            "type": "string"
+          },
+          "muted": {
+            "description": "Второстепенный текст",
+            "maxLength": 7,
+            "type": "string"
+          },
+          "radius": {
+            "description": "Скругление карточек, px",
+            "format": "int64",
+            "maximum": 40,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "scheme": {
+            "description": "Светлая или тёмная схема: от неё цвета системных элементов",
+            "enum": [
+              "light",
+              "dark"
+            ],
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 7,
+            "type": "string"
+          }
+        },
+        "required": [
+          "scheme",
+          "bg",
+          "bg2",
+          "card",
+          "card_alpha",
+          "text",
+          "muted",
+          "accent",
+          "accent2",
+          "danger",
+          "brand_accent",
+          "font",
+          "radius",
+          "glass",
+          "headings",
+          "glow",
+          "background"
         ],
         "type": "object"
       },
@@ -16900,14 +17137,13 @@
         "operationId": "delete-sub-page-image",
         "parameters": [
           {
+            "description": "logo, background, bg-\u003cx\u003e (фон шаблона) или banner-\u003cx\u003e (картинка баннера)",
             "in": "path",
             "name": "name",
             "required": true,
             "schema": {
-              "enum": [
-                "logo",
-                "background"
-              ],
+              "description": "logo, background, bg-\u003cx\u003e (фон шаблона) или banner-\u003cx\u003e (картинка баннера)",
+              "pattern": "^(logo|background|bg-[a-z0-9-]{1,24}|banner-[a-z0-9-]{1,40})$",
               "type": "string"
             }
           }
@@ -16937,14 +17173,13 @@
         "operationId": "get-sub-page-image",
         "parameters": [
           {
+            "description": "logo, background, bg-\u003cx\u003e (фон шаблона) или banner-\u003cx\u003e (картинка баннера)",
             "in": "path",
             "name": "name",
             "required": true,
             "schema": {
-              "enum": [
-                "logo",
-                "background"
-              ],
+              "description": "logo, background, bg-\u003cx\u003e (фон шаблона) или banner-\u003cx\u003e (картинка баннера)",
+              "pattern": "^(logo|background|bg-[a-z0-9-]{1,24}|banner-[a-z0-9-]{1,40})$",
               "type": "string"
             }
           }
@@ -16995,14 +17230,13 @@
         "operationId": "put-sub-page-image",
         "parameters": [
           {
+            "description": "logo, background, bg-\u003cx\u003e (фон шаблона) или banner-\u003cx\u003e (картинка баннера)",
             "in": "path",
             "name": "name",
             "required": true,
             "schema": {
-              "enum": [
-                "logo",
-                "background"
-              ],
+              "description": "logo, background, bg-\u003cx\u003e (фон шаблона) или banner-\u003cx\u003e (картинка баннера)",
+              "pattern": "^(logo|background|bg-[a-z0-9-]{1,24}|banner-[a-z0-9-]{1,40})$",
               "type": "string"
             }
           }

@@ -1,5 +1,5 @@
-// The subscription page's body as the admin set it up (page.ts): its header, backdrop and
-// blocks in their order. The page (main.tsx) gives it the subscriber's data; the admin's
+// The subscription page's body as its template sets it up (page.ts): its header, backdrop,
+// blocks in their order and banners. The page (main.tsx) gives it the subscriber's data; the admin's
 // preview gives it a sample, so both show the same thing.
 import { Check, ChevronLeft, ChevronRight, Copy, FileText, LifeBuoy, MapPin, QrCode, Send } from "lucide-react";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
@@ -12,15 +12,16 @@ import { safeHref } from "../lib/url";
 import { APPS, detect, enc, type Platform } from "./apps";
 import { Devices } from "./devices";
 import { outside } from "./net";
-import { backdropStyle, blockTitle, MINI_APP_ONLY, orderApps, PLATFORMS, type DocItem, type DocView, type PageBlock, type PageConfig, type PageLook } from "./page";
+import { backdropStyle, bannersAt, blockTitle, MINI_APP_ONLY, orderApps, PLATFORMS, type DocItem, type DocView, type PageApps, type PageBanner, type PageBlock, type PageBrand, type Template, type TemplateLook } from "./page";
 import type { Info } from "./types";
 
 const PLATFORM_LABEL: Record<Platform, string> = { ios: "iPhone", android: "Android", windows: "Windows", macos: "Mac", linux: "Linux" };
 
-/** What is behind the cards: the theme's dawn, or the admin's colour, gradient or picture. */
-export function PageBackdrop({ look, image }: { look: PageLook; image?: string }) {
+/** What is behind the cards: the template's own, or the admin's colour, gradient or picture. */
+export function PageBackdrop({ look, image }: { look: TemplateLook; image?: string }) {
+  const kind = look.background.kind;
+  if (kind === "theme" || (kind === "image" && !image)) return <Atmosphere calm />;
   const style = backdropStyle(look, image);
-  if (!style) return <Atmosphere calm />;
   const dim = look.background.kind === "image" ? look.background.dim : 0;
   return (
     <div className="sub-backdrop" style={style} aria-hidden>
@@ -30,8 +31,7 @@ export function PageBackdrop({ look, image }: { look: PageLook; image?: string }
 }
 
 /** The column the page lives in, with the brand on top. */
-export function PageShell({ config, brand, logo, right, children }: { config: PageConfig; brand: string; logo?: string; right?: ReactNode; children: ReactNode }) {
-  const b = config.brand;
+export function PageShell({ head: b, brand, logo, right, children }: { head: PageBrand; brand: string; logo?: string; right?: ReactNode; children: ReactNode }) {
   const mark =
     b.logo === "image" && logo ? (
       <img src={logo} alt="" width={28} height={28} className="h-7 w-7 shrink-0 rounded-[9px] object-cover" decoding="async" />
@@ -64,7 +64,10 @@ export function PageShell({ config, brand, logo, right, children }: { config: Pa
 }
 
 type BlocksProps = {
-  config: PageConfig;
+  template: Template;
+  apps: PageApps;
+  /** Where a banner's picture is: the page's images are under its own path. */
+  asset: (path?: string) => string | undefined;
   info: Info;
   subURL: string;
   /** The page runs as the bot's Mini App: the shop and promo codes show, links leave through Telegram. */
@@ -85,12 +88,44 @@ type BlocksProps = {
   platform?: Platform;
 };
 
-/** The page's blocks in the admin's order, the ones turned off left out. */
+/** The template's blocks in its order, the ones turned off left out, with its banners. */
 export function PageBlocks(p: BlocksProps) {
+  const at = (place: PageBanner["place"], after?: string) => bannersAt(p.template, p.tgMode ? "miniapp" : "browser", place, after).map((x) => <Banner key={x.id} banner={x} asset={p.asset} />);
   return (
     <>
-      {p.config.blocks.map((b) => (b.on && (p.tgMode || !MINI_APP_ONLY.includes(b.type)) ? <Fragment key={b.id}>{block(b, p)}</Fragment> : null))}
+      {at("top")}
+      {p.template.blocks.map((b) =>
+        b.on && (p.tgMode || !MINI_APP_ONLY.includes(b.type)) ? (
+          <Fragment key={b.id}>
+            {block(b, p)}
+            {at("after", b.id)}
+          </Fragment>
+        ) : null,
+      )}
+      {at("bottom")}
     </>
+  );
+}
+
+/** A banner of the template: its picture, title, text and button. */
+export function Banner({ banner: b, asset }: { banner: PageBanner; asset: (path?: string) => string | undefined }) {
+  const href = safeHref(b.button.url, { tg: true });
+  const image = asset(b.image);
+  return (
+    <section className={`sub-banner sub-card ${b.tone === "card" ? "glass" : ""}`} data-tone={b.tone} role="note">
+      {image ? <img src={image} alt="" loading="lazy" decoding="async" /> : null}
+      {b.title || b.text || (href && b.button.label) ? (
+        <div className="flex flex-col gap-1 p-4">
+          {b.title ? <h2 className="sub-heading text-[15px] font-semibold">{b.title}</h2> : null}
+          {b.text ? <p className="sub-banner-text text-[13px] leading-5 whitespace-pre-wrap">{b.text}</p> : null}
+          {href && b.button.label ? (
+            <a className={`btn btn-sm mt-2 self-start ${b.tone === "accent" ? "" : "btn-primary"}`} href={href} target="_blank" rel="noreferrer noopener" {...outside(href)}>
+              {b.button.label}
+            </a>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
   );
 }
 
@@ -110,13 +145,13 @@ function block(b: PageBlock, p: BlocksProps): ReactNode {
     case "devices":
       return info.binding || info.devices?.length ? <Devices info={info} subURL={p.subURL} reload={p.reload} title={b.title} /> : null;
     case "apps":
-      return <Apps key={p.platform} block={b} config={p.config} subURL={p.subURL} brand={info.brand} happ={info.happ_link} tgMode={p.tgMode} platform={p.platform} />;
+      return <Apps key={p.platform} block={b} apps={p.apps} subURL={p.subURL} brand={info.brand} happ={info.happ_link} tgMode={p.tgMode} platform={p.platform} />;
     case "guide":
       return <Guide block={b} />;
     case "instructions":
       return p.docs.length ? <Instructions block={b} docs={p.docs} onOpen={p.onOpenDoc} /> : null;
     case "link":
-      return <SubLink block={b} subURL={p.subURL} qr={p.config.apps.qr} />;
+      return <SubLink block={b} subURL={p.subURL} qr={p.apps.qr} />;
     case "reissue":
       return p.reissue ?? null;
     case "locations":
@@ -253,14 +288,14 @@ function Traffic({ block: b, info, buy }: { block: PageBlock; info: Info; buy?: 
 }
 
 /** The tab a page opens on: the admin's, or the visitor's device. */
-export function firstPlatform(config: PageConfig, detected: Platform): Platform {
-  return config.apps.platform === "auto" ? detected : config.apps.platform;
+export function firstPlatform(apps: PageApps, detected: Platform): Platform {
+  return apps.platform === "auto" ? detected : apps.platform;
 }
 
-function Apps({ block: b, config, subURL, brand, happ, tgMode, platform }: { block: PageBlock; config: PageConfig; subURL: string; brand: string; happ?: string; tgMode: boolean; platform?: Platform }) {
-  const lists = Object.fromEntries(PLATFORMS.map((k) => [k, orderApps(APPS[k], config.apps[k])])) as Record<Platform, (typeof APPS)[Platform]>;
+function Apps({ block: b, apps, subURL, brand, happ, tgMode, platform }: { block: PageBlock; apps: PageApps; subURL: string; brand: string; happ?: string; tgMode: boolean; platform?: Platform }) {
+  const lists = Object.fromEntries(PLATFORMS.map((k) => [k, orderApps(APPS[k], apps[k])])) as Record<Platform, (typeof APPS)[Platform]>;
   const shown = PLATFORMS.filter((k) => lists[k].length > 0);
-  const want = platform ?? firstPlatform(config, detectOnce());
+  const want = platform ?? firstPlatform(apps, detectOnce());
   const [current, setCurrent] = useState<Platform>(shown.includes(want) ? want : (shown[0] ?? want));
   if (shown.length === 0) return null;
   const tab = shown.includes(current) ? current : shown[0]!;

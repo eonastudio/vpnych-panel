@@ -15,39 +15,15 @@ import (
 	"mikan/internal/textutil"
 )
 
-// Page is the page's settings document. The API takes and gives it whole.
+// Page is the page's settings document. The API takes and gives it whole. The look, the
+// blocks, the texts and the banners are a template's (Template); the head, the apps and the
+// link preview are the page's whatever template it shows.
 type Page struct {
-	Look   PageLook    `json:"look"`
-	Brand  PageBrand   `json:"brand"`
-	Blocks []PageBlock `json:"blocks" maxItems:"40" doc:"Блоки страницы в их порядке; встроенные — по одному, своих (text, links) — до 12"`
-	Apps   PageApps    `json:"apps"`
-	OG     PageOG      `json:"og"`
-	CSS    string      `json:"css" maxLength:"20480" doc:"Свой CSS страницы подписки (не админки), до 20 КБ; @import и < убираются"`
-}
-
-// Palettes are the page's themes, the panel's: the first four follow Mode, the others are
-// light or dark by themselves (web/src/lib/themes.ts, styles/themes.css). Midnight is Mikan
-// in the dark mode.
-var Palettes = []string{"mikan", "ocean", "sakura", "forest", "latte", "snow", "dawn", "dune", "graphite", "abyss", "ember", "plum", "moss", "terminal", "nord", "mocha", "tokyo", "dracula", "aurora", "cosmos"}
-
-// PageLook is how the page looks.
-type PageLook struct {
-	Palette    string         `json:"palette" enum:"mikan,ocean,sakura,forest,latte,snow,dawn,dune,graphite,abyss,ember,plum,moss,terminal,nord,mocha,tokyo,dracula,aurora,cosmos" doc:"Тема, как темы панели. mikan, ocean, sakura и forest следуют mode; остальные светлые или тёмные сами"`
-	Mode       string         `json:"mode" enum:"light,dark,system" doc:"light, dark (как Midnight) или system — как у посетителя"`
-	Accent     string         `json:"accent" enum:"theme,brand" doc:"theme — цвет палитры, brand — цвет бренда (brand_accent)"`
-	Background PageBackground `json:"background"`
-	Font       string         `json:"font" enum:"default,onest,system,rounded" doc:"default — Unbounded и Onest, onest — только Onest, system — шрифт устройства, rounded — скруглённый системный"`
-	Radius     string         `json:"radius" enum:"small,medium,large"`
-	Cards      string         `json:"cards" enum:"glass,solid" doc:"glass — полупрозрачные карточки, solid — непрозрачные"`
-}
-
-// PageBackground is what is behind the cards.
-type PageBackground struct {
-	Kind  string `json:"kind" enum:"theme,solid,gradient,image" doc:"theme — фон темы, solid — цвет from, gradient — от from к to, image — загруженная картинка"`
-	From  string `json:"from" maxLength:"7" doc:"#RRGGBB"`
-	To    string `json:"to" maxLength:"7" doc:"#RRGGBB"`
-	Angle int    `json:"angle" minimum:"0" maximum:"359" doc:"Направление градиента в градусах"`
-	Dim   int    `json:"dim" minimum:"0" maximum:"80" doc:"Затемнение картинки, %"`
+	Active    string     `json:"active" maxLength:"16" doc:"Шаблон, который видят подписчики"`
+	Templates []Template `json:"templates" maxItems:"16" doc:"Встроенные шаблоны и свои (до 8); не показанные — черновики"`
+	Brand     PageBrand  `json:"brand"`
+	Apps      PageApps   `json:"apps"`
+	OG        PageOG     `json:"og"`
 }
 
 // PageBrand is the page's head: the logo and a line under the name (the name is the brand).
@@ -130,16 +106,13 @@ const (
 // Platforms of the apps block and of the instructions.
 var Platforms = []string{"ios", "android", "windows", "macos", "linux"}
 
-// Default is the page as it was before it could be configured.
+// Default is the page with nothing configured: the built-in templates as they come, ВПНыч's
+// shown.
 func Default() Page {
-	c := Page{
-		Look: PageLook{Palette: "mikan", Mode: "dark", Accent: "theme", Font: "default", Radius: "large", Cards: "glass",
-			Background: PageBackground{Kind: "theme", Angle: 160, Dim: 30}},
-		Brand: PageBrand{Logo: "letter"},
-		Apps:  PageApps{Platform: "auto", QR: true},
-	}
-	for _, b := range builtins {
-		c.Blocks = append(c.Blocks, PageBlock{ID: b.typ, Type: b.typ, On: b.on})
+	c := Page{Active: TemplateDefault, Brand: PageBrand{Logo: "letter"}, Apps: PageApps{Platform: "auto", QR: true}}
+	for _, id := range Builtins {
+		t, _ := BuiltinTemplate(id)
+		c.Templates = append(c.Templates, t)
 	}
 	c.Apps.lists(func(l *PageAppList) { l.Order, l.Hidden = []string{}, []string{} })
 	return c
@@ -183,7 +156,6 @@ func Normalize(c *Page) []Problem {
 	}
 	d := Default()
 
-	l := &c.Look
 	enum := func(field string, v *string, def string, set ...string) {
 		*v = strings.TrimSpace(*v)
 		switch {
@@ -193,41 +165,6 @@ func Normalize(c *Page) []Problem {
 			bad(field, "value_invalid", *v)
 			*v = def
 		}
-	}
-	enum("look.palette", &l.Palette, d.Look.Palette, Palettes...)
-	enum("look.mode", &l.Mode, d.Look.Mode, "light", "dark", "system")
-	enum("look.accent", &l.Accent, d.Look.Accent, "theme", "brand")
-	enum("look.font", &l.Font, d.Look.Font, "default", "onest", "system", "rounded")
-	enum("look.radius", &l.Radius, d.Look.Radius, "small", "medium", "large")
-	enum("look.cards", &l.Cards, d.Look.Cards, "glass", "solid")
-	bg := &l.Background
-	enum("look.background.kind", &bg.Kind, d.Look.Background.Kind, "theme", "solid", "gradient", "image")
-	for field, v := range map[string]*string{"look.background.from": &bg.From, "look.background.to": &bg.To} {
-		*v = strings.ToUpper(strings.TrimSpace(*v))
-		if *v != "" && !ValidColor(*v) {
-			bad(field, "color_invalid", *v)
-			*v = ""
-		}
-	}
-	switch {
-	case bg.Kind == "solid" && bg.From == "":
-		bad("look.background.from", "color_required", nil)
-		bg.Kind = "theme"
-	case bg.Kind == "gradient" && (bg.From == "" || bg.To == ""):
-		field := "look.background.from"
-		if bg.From != "" {
-			field = "look.background.to"
-		}
-		bad(field, "color_required", nil)
-		bg.Kind = "theme"
-	}
-	if bg.Angle < 0 || bg.Angle > 359 {
-		bad("look.background.angle", "value_invalid", bg.Angle)
-		bg.Angle = d.Look.Background.Angle
-	}
-	if bg.Dim < 0 || bg.Dim > 80 {
-		bad("look.background.dim", "value_invalid", bg.Dim)
-		bg.Dim = d.Look.Background.Dim
 	}
 
 	b := &c.Brand
@@ -247,7 +184,7 @@ func Normalize(c *Page) []Problem {
 		b.Subtitle = ""
 	}
 
-	out = append(out, normalizeBlocks(c)...)
+	out = append(out, normalizeTemplates(c)...)
 
 	a := &c.Apps
 	enum("apps.platform", &a.Platform, d.Apps.Platform, append([]string{"auto"}, Platforms...)...)
@@ -287,18 +224,14 @@ func Normalize(c *Page) []Problem {
 		o.Description = ""
 	}
 
-	if utf8.RuneCountInString(c.CSS) > 20480 {
-		bad("css", "too_long", 20480)
-		c.CSS = ""
-	}
-	c.CSS = CleanCSS(c.CSS)
 	return out
 }
 
-func normalizeBlocks(c *Page) []Problem {
+// normalizeBlocks cleans a template's blocks; at is the template's field path.
+func normalizeBlocks(list *[]PageBlock, at string) []Problem {
 	var out []Problem
 	bad := func(i int, field, code string, value any) {
-		p := "blocks[" + strconv.Itoa(i) + "]"
+		p := at + "blocks[" + strconv.Itoa(i) + "]"
 		if field != "" {
 			p += "." + field
 		}
@@ -306,8 +239,8 @@ func normalizeBlocks(c *Page) []Problem {
 	}
 	seen := map[string]bool{}
 	custom := 0
-	blocks := make([]PageBlock, 0, len(c.Blocks)+len(builtins))
-	for i, b := range c.Blocks {
+	blocks := make([]PageBlock, 0, len(*list)+len(builtins))
+	for i, b := range *list {
 		b.ID, b.Type = strings.TrimSpace(b.ID), strings.TrimSpace(b.Type)
 		builtin := slices.ContainsFunc(builtins, func(x builtinBlock) bool { return x.typ == b.Type })
 		switch {
@@ -400,7 +333,7 @@ func normalizeBlocks(c *Page) []Problem {
 			blocks = append(blocks, missing)
 		}
 	}
-	c.Blocks = blocks
+	*list = blocks
 	return out
 }
 

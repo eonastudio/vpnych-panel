@@ -1,6 +1,7 @@
 // The Telegram Mini App: the subscriber's subscriptions, the shop and the setup, in ВПНыч's
 // glass look. The same data and requests as the browser's page (browser.tsx); its own screens.
 import "../../styles/fonts-inter.css";
+import "../../styles/fonts.css";
 import "./app.css";
 import { StrictMode, useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -8,7 +9,7 @@ import { ErrorBoundary } from "../../components/error-boundary";
 import { initI18n, t, useLocale } from "../../i18n";
 import { subDicts } from "../../i18n/sub";
 import { hashAnchor, initData, json, okData, postJSON, request, subRoot, tgEvent, tokenOf } from "../net";
-import { readPage } from "../page";
+import { applyLook, backdropStyle, barColor, readPage } from "../page";
 import { loadShop, type ShopData } from "../shop";
 import type { Info, TgSub } from "../types";
 import { Clouds } from "./art";
@@ -38,6 +39,20 @@ function applyZoom() {
 }
 
 const page = readPage();
+// The template's look and texts on <html>; its pictures are under the page's own path.
+const pageRoot = new URL(".", document.baseURI).href.replace(/\/$/, "");
+const asset = (path?: string) => (path ? pageRoot + "/" + path : undefined);
+applyLook(page, asset);
+{
+  const look = page.template.look;
+  const kind = look.background.kind;
+  const image = asset(page.background);
+  // The admin's colour, gradient or picture in place of the template's own glow.
+  if (kind !== "theme" && !(kind === "image" && !image)) {
+    const s = backdropStyle(look, image);
+    Object.assign(document.body.style, s, { backgroundAttachment: "fixed" });
+  }
+}
 
 function MiniApp() {
   useLocale();
@@ -277,9 +292,9 @@ function Splash({ error, onRetry }: { error?: string; onRetry?: () => void }) {
 applyZoom();
 window.addEventListener("resize", applyZoom);
 // Telegram paints its header and bottom bar in the Mini App's own colours.
-tgEvent("web_app_set_header_color", { color: "#0f1b24" });
-tgEvent("web_app_set_background_color", { color: "#0b141b" });
-tgEvent("web_app_set_bottom_bar_color", { color: "#0b141b" });
+tgEvent("web_app_set_header_color", { color: barColor(page.template.look) });
+tgEvent("web_app_set_background_color", { color: page.template.look.bg });
+tgEvent("web_app_set_bottom_bar_color", { color: page.template.look.bg });
 
 void initI18n(subDicts).then(() => {
   document.title = t("sub.pageTitle");
