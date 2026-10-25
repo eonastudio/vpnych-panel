@@ -2,7 +2,7 @@
  * The subscription page's looks (internal/panel/subpage): a palette (the panel's themes),
  * light or dark, the brand's colour, a font, corners and cards. Everything is scoped to
  * .sub-look: on the page it is <html>, in the admin's preview the frame, so the preview
- * shows the page's look whatever the admin's own theme is. The light Mikan look repeats
+ * shows the page's look whatever the admin's own theme is. The light ВПНыч look repeats
  * :root, which is the page as it always was.
  *
  * Any other panel theme comes whole from styles/themes.css: the element then carries
@@ -17,14 +17,14 @@
 }
 .sub-look:not([data-theme]) {
   color-scheme: light;
-  --bg: #fbf1e8;
+  --bg: #eaf4f2;
   --ink-900: #161a24; --ink-800: #252b38; --ink-700: #394050; --ink-600: #4a5263;
   --ink-500: #5c6474; --ink-400: #666d7b; --ink-300: #a6adb8; --ink-200: #d0d4db;
   --ink-100: #e7e9ed; --ink-50: #f2f3f5;
   --fill: var(--ink-900); --on-fill: #fff; --on-danger: #fff;
   --code-bg: #161a24; --code-fg: #e7e9ed;
-  --mikan-50: #fff3ea; --mikan-100: #ffe4d0; --mikan-200: #ffcba6; --mikan-400: #f7964f;
-  --mikan-500: #f07a2e; --mikan-600: #db6317; --mikan-700: #b24c0c;
+  --mikan-50: #e6f6f3; --mikan-100: #c8ece6; --mikan-200: #9fdcd2; --mikan-400: #2bb3a1;
+  --mikan-500: #1f9e8e; --mikan-600: #17877a; --mikan-700: #10685e;
   --leaf-50: #e4f4eb; --leaf-500: #2f9e6b; --leaf-700: #1f7650;
   --lagoon-50: #e0f1f4; --lagoon-400: #58afbe; --lagoon-500: #2b8c9e; --lagoon-600: #247685;
   --honey-50: #fcf1da; --honey-500: #e0a021; --honey-600: #8f5e06;
@@ -48,9 +48,9 @@
   --fill-hover: var(--ink-700);
   --ring: color-mix(in srgb, var(--mikan-500) 20%, transparent);
   --scrim: rgba(22, 26, 36, 0.18);
-  /* The dawn of the panel's Mikan theme, whatever theme the admin previews it in. */
-  --glow-a: rgba(255, 138, 72, 0.72); --glow-b: rgba(255, 122, 150, 0.42); --glow-c: rgba(255, 196, 100, 0.55);
-  --glow-d: rgba(158, 142, 255, 0.42); --glow-e: rgba(98, 184, 230, 0.48);
+  /* The lagoon of the panel's ВПНыч theme, whatever theme the admin previews it in. */
+  --glow-a: rgba(43, 179, 161, 0.55); --glow-b: rgba(96, 214, 196, 0.38); --glow-c: rgba(130, 220, 200, 0.42);
+  --glow-d: rgba(70, 140, 200, 0.34); --glow-e: rgba(40, 110, 115, 0.5);
   --glow-opacity: 1; --grain-blend: multiply; --grain-opacity: 0.055;
   --pattern: none; --pattern-size: auto; --pattern-opacity: 0; --pattern-blur: 0px;
 }
@@ -69,27 +69,27 @@
   --glass: rgba(255,255,255,.62); --glass-strong: rgba(255,255,255,.89); --glass-edge: rgba(255,255,255,.80);
 }
 
-/* Dark: the panel's Midnight, with each palette's own accent. */
+/* Dark: ВПНыч's night (the panel's Midnight), with each palette's own accent. */
 .sub-look[data-scheme="dark"]:not([data-theme]) {
   color-scheme: dark;
-  --bg: #0d1118;
+  --bg: #0b141b;
   --ink-900: #f4f7fb; --ink-800: #e3e8ef; --ink-700: #c4ccd7; --ink-600: #a8b2c0;
   --ink-500: #8b97a8; --ink-400: #727e8f; --ink-300: #515d6d; --ink-200: #394453;
   --ink-100: #252e3a; --ink-50: #1b232e;
-  --fill: var(--mikan-500); --on-fill: #161a24; --on-danger: #161a24;
+  --fill: var(--mikan-500); --on-fill: #0b141b; --on-danger: #161a24;
   --code-bg: #080b10; --code-fg: #e7e9ed;
-  --mikan-50: #3a2418; --mikan-100: #55311e; --mikan-200: #774322; --mikan-400: #ff9a57;
-  --mikan-500: #ff843d; --mikan-600: #ff9b5d; --mikan-700: #ffb27a;
+  --mikan-50: #10302c; --mikan-100: #15423c; --mikan-200: #1b5a52; --mikan-400: #3cc4b1;
+  --mikan-500: #2bb3a1; --mikan-600: #4fcbb9; --mikan-700: #7ad9cb;
   --leaf-50: #173326; --leaf-500: #45c487; --leaf-700: #73dca8;
   --lagoon-50: #17343b; --lagoon-400: #66c7d8; --lagoon-500: #42afc2; --lagoon-600: #79d6e4;
   --honey-50: #3a3018; --honey-500: #efb53b; --honey-600: #ffd36b;
   --berry-50: #3d2021; --berry-600: #ff7069;
-  --surface: rgba(22, 29, 39, .92);
-  --surface-soft: rgba(24, 31, 42, .72);
-  --surface-hover: rgba(40, 50, 64, .96);
-  --surface-solid: #161d27;
-  --raised: #263142;
-  --glass: rgba(24, 31, 42, .72); --glass-strong: rgba(22, 29, 39, .92);
+  --surface: rgba(17, 30, 39, .92);
+  --surface-soft: rgba(19, 33, 43, .72);
+  --surface-hover: rgba(32, 50, 61, .96);
+  --surface-solid: #111e27;
+  --raised: #1d313d;
+  --glass: rgba(19, 33, 43, .62); --glass-strong: rgba(17, 30, 39, .9);
   --glass-edge: color-mix(in srgb, var(--mikan-500) 18%, transparent);
   --glass-highlight: color-mix(in srgb, var(--mikan-500) 18%, transparent);
   --hairline: rgba(255,255,255,.09); --hover: rgba(255,255,255,.06);
@@ -178,6 +178,33 @@
 /* The page's cards take the admin's corners (24px, the rounded-3xl they always had). */
 .sub-card { border-radius: var(--sub-r, 24px); }
 
-/* The dawn behind the cards is light: at night it stays a faint glow. */
+/* The lagoon behind the cards is light: at night it stays a faint glow. */
 .sub-look[data-scheme="dark"]:not([data-theme]) .atmo .glow { opacity: 0.3; }
 .sub-look[data-scheme="dark"]:not([data-theme]) .atmo .grain { mix-blend-mode: screen; opacity: 0.03; }
+
+/*
+ * ВПНыч: the base palette draws the page as the bot's Mini App always looked. A teal
+ * gradient on the main button, headings set as small spaced capitals, and at night glass
+ * with a sheen and a real blur over a glow from the top. A brand colour of the admin's own
+ * keeps the plain button; solid cards stay solid.
+ */
+.sub-look[data-palette="mikan"]:not([data-theme]) .sub-heading {
+  font-size: 20px; line-height: 24px; font-weight: 800; font-style: italic; letter-spacing: -0.01em; text-transform: uppercase; color: var(--ink-900);
+}
+.sub-look[data-palette="mikan"]:not([data-theme]) .sub-title { font-weight: 700; letter-spacing: -0.02em; }
+.sub-look[data-palette="mikan"]:not([data-theme]):not([data-accent]) .btn-primary {
+  background: linear-gradient(180deg, #168072 0%, #0f655b 100%); color: #f4fffd; font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), inset 0 -2px 0 rgba(0, 0, 0, 0.12), 0 14px 30px -14px rgba(31, 158, 142, 0.8);
+}
+.sub-look[data-palette="mikan"]:not([data-theme]):not([data-accent]) .btn-primary:hover:not(:disabled) { background: linear-gradient(180deg, #1a8d7e 0%, #12716a 100%); }
+.sub-look[data-palette="mikan"]:not([data-theme]) .btn-block { height: 52px; border-radius: var(--sub-r-inner); font-size: 16px; }
+.sub-look[data-palette="mikan"][data-scheme="dark"]:not([data-theme]) .atmo {
+  background: radial-gradient(90% 45% at 50% -5%, rgba(40, 110, 115, 0.28), transparent 70%), linear-gradient(180deg, #0f1b24 0%, #0b141b 100%);
+}
+.sub-look[data-palette="mikan"][data-scheme="dark"]:not([data-theme]) .atmo .glow { opacity: 0.18; }
+.sub-look[data-palette="mikan"][data-scheme="dark"]:not([data-theme]):not([data-cards="solid"]) .sub-card.glass {
+  background: linear-gradient(180deg, rgba(244, 247, 251, 0.075), rgba(244, 247, 251, 0.025)), rgba(26, 40, 50, 0.72);
+  border-color: rgba(244, 247, 251, 0.075);
+  box-shadow: inset 0 1px 0 rgba(244, 247, 251, 0.06), 0 24px 48px -24px rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(22px) saturate(140%); backdrop-filter: blur(22px) saturate(140%);
+}

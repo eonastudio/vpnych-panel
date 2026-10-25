@@ -40,9 +40,9 @@ function offlinePage() {
 <meta name="color-scheme" content="light dark">
 <title>${t.title}</title>
 <style>
-  /* The panel's own themes (src/styles/themes.css): mikan, and midnight for a dark system. */
-  :root { --bg: #fbf1e8; --card: #ffffff; --ink: #161a24; --muted: #5c6474; --icon: #f07a2e; --fill: #161a24; --on-fill: #ffffff; --line: rgba(22, 26, 36, 0.08); }
-  @media (prefers-color-scheme: dark) { :root { --bg: #0d1118; --card: #161d27; --ink: #f4f7fb; --muted: #8b97a8; --icon: #ff843d; --fill: #ff843d; --on-fill: #161a24; --line: rgba(244, 247, 251, 0.1); } }
+  /* The panel's own themes (src/styles/themes.css): ВПНыч, and midnight for a dark system. */
+  :root { --bg: #eaf4f2; --card: #ffffff; --ink: #161a24; --muted: #5c6474; --icon: #1f9e8e; --fill: #161a24; --on-fill: #ffffff; --line: rgba(22, 26, 36, 0.08); }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0b141b; --card: #111e27; --ink: #f4f7fb; --muted: #8b97a8; --icon: #2bb3a1; --fill: #2bb3a1; --on-fill: #0b141b; --line: rgba(244, 247, 251, 0.1); } }
   * { box-sizing: border-box; }
   body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; background: var(--bg); color: var(--ink);
     font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }

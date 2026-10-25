@@ -17,7 +17,7 @@ import (
 const AppNameMax = 30
 
 // AppName is the installed panel's name: the admin's own (stored), else the brand, else
-// "mikan" ("VPN" is the brand of a panel that never set one).
+// "ВПНыч" ("VPN" is the brand of a panel that never set one).
 func AppName(stored, brand string) string {
 	if s := cleanAppName(stored); s != "" {
 		return s
@@ -25,7 +25,7 @@ func AppName(stored, brand string) string {
 	if b := cleanAppName(brand); b != "" && b != "VPN" {
 		return b
 	}
-	return "mikan"
+	return "ВПНыч"
 }
 
 func cleanAppName(s string) string {
@@ -77,7 +77,7 @@ type manifest struct {
 
 // The panel's light theme (web/index.html's theme-color): the splash and the title bar
 // until the panel sets the colour of the theme chosen.
-const manifestColor = "#FBF1E8"
+const manifestColor = "#EAF4F2"
 
 var manifestIcons = []manifestIcon{
 	{Src: "pwa-192.png", Sizes: "192x192", Type: "image/png", Purpose: "any"},
@@ -116,7 +116,7 @@ func Manifest(info func(ctx context.Context) (ManifestInfo, error)) http.Handler
 		}
 		m := manifest{
 			Name: in.Name, ShortName: in.Name,
-			Description: "mikan admin panel",
+			Description: "ВПНыч admin panel",
 			Lang:        lang, Dir: "ltr",
 			StartURL: "./", Scope: "./",
 			Display:         "standalone",
@@ -124,7 +124,7 @@ func Manifest(info func(ctx context.Context) (ManifestInfo, error)) http.Handler
 			Icons: manifestIcons,
 		}
 		if lang == "ru" {
-			m.Description = "Панель управления mikan"
+			m.Description = "Панель управления ВПНыч"
 		}
 		for _, s := range manifestShortcuts {
 			name := s.en

@@ -160,7 +160,7 @@ export function Devices({ info, subURL, reload, title }: { info: Info; subURL: s
   return (
     <section className="glass sub-card p-4" aria-labelledby="devices-title">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 id="devices-title" tabIndex={-1} className="text-[15px] font-semibold">
+        <h2 id="devices-title" tabIndex={-1} className="sub-heading text-[15px] font-semibold">
           {title || t("sub.devicesTitle")}
         </h2>
         {info.device_limit > 0 ? (

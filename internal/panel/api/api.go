@@ -228,14 +228,14 @@ type handlers struct {
 func Config(version string) huma.Config {
 	// Handlers always return non-nil slices; nullable arrays would force null checks in the UI.
 	huma.DefaultArrayNullable = false
-	cfg := huma.DefaultConfig("mikan", version)
+	cfg := huma.DefaultConfig("ВПНыч", version)
 	// No docs UI, no spec endpoint and no $schema links at runtime: the spec is
 	// exported by the CLI at build time for the TypeScript client.
 	cfg.DocsPath = ""
 	cfg.OpenAPIPath = ""
 	cfg.SchemasPath = ""
 	cfg.CreateHooks = nil
-	cfg.Info.Description = "REST API панели mikan. Все пути — под секретным адресом админки: https://<панель>/<секретный путь>/api/v1/…\n\n" +
+	cfg.Info.Description = "REST API панели ВПНыч. Все пути — под секретным адресом админки: https://<панель>/<секретный путь>/api/v1/…\n\n" +
 		"Скрипты и интеграции авторизуются ключом API (Настройки → API): заголовок `Authorization: Bearer mk_…`. " +
 		"Ключ «чтение» выполняет только GET и не получает ссылок подписок и секретных адресов; «полный» меняет данные, кроме входа, сессий, самих ключей и операций, где уходят деньги, ключи и адреса клиентов (они помечены «только сессия»).\n\n" +
 		"Админка в браузере ходит с cookie сессии; изменяющие запросы тогда требуют заголовок `X-CSRF-Token` из `GET /auth/me`.\n\n" +

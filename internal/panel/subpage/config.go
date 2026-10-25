@@ -133,7 +133,7 @@ var Platforms = []string{"ios", "android", "windows", "macos", "linux"}
 // Default is the page as it was before it could be configured.
 func Default() Page {
 	c := Page{
-		Look: PageLook{Palette: "mikan", Mode: "light", Accent: "theme", Font: "default", Radius: "medium", Cards: "glass",
+		Look: PageLook{Palette: "mikan", Mode: "dark", Accent: "theme", Font: "default", Radius: "large", Cards: "glass",
 			Background: PageBackground{Kind: "theme", Angle: 160, Dim: 30}},
 		Brand: PageBrand{Logo: "letter"},
 		Apps:  PageApps{Platform: "auto", QR: true},

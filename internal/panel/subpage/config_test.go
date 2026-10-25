@@ -32,7 +32,7 @@ func TestZeroIsDefault(t *testing.T) {
 	if got := strings.Join(order, ","); got != "status,promo,shop,traffic,devices,apps,guide,instructions,link,reissue,telegram,support" {
 		t.Fatalf("default sections: %s", got)
 	}
-	if def := Default(); def.Look != (PageLook{Palette: "mikan", Mode: "light", Accent: "theme", Font: "default", Radius: "medium", Cards: "glass", Background: PageBackground{Kind: "theme", Angle: 160, Dim: 30}}) || !def.Apps.QR || def.Apps.Platform != "auto" || def.CSS != "" {
+	if def := Default(); def.Look != (PageLook{Palette: "mikan", Mode: "dark", Accent: "theme", Font: "default", Radius: "large", Cards: "glass", Background: PageBackground{Kind: "theme", Angle: 160, Dim: 30}}) || !def.Apps.QR || def.Apps.Platform != "auto" || def.CSS != "" {
 		t.Fatalf("default look changed: %+v", def)
 	}
 }

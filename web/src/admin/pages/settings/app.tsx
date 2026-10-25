@@ -135,22 +135,25 @@ function InstallBlock({ st }: { st: InstallState }) {
   }
 }
 
-type NameMode = "brand" | "mikan" | "own";
+/** The product's own name, the installed panel's when the admin picks no other. */
+const APP_NAME = "ВПНыч";
 
-/** The shortcut's name: the service's, "mikan", or one of the admin's own. */
+type NameMode = "brand" | "default" | "own";
+
+/** The shortcut's name: the service's, "ВПНыч", or one of the admin's own. */
 function AppNameChoice({ s }: { s: Schemas["SettingsView"] }) {
   const save = useSaveSettings();
   const inputId = useId();
   const brand = brandName(s);
   const stored = s.panel_app_name.trim();
-  const saved: NameMode = stored === "" ? (brand ? "brand" : "mikan") : stored === "mikan" ? "mikan" : "own";
+  const saved: NameMode = stored === "" ? (brand ? "brand" : "default") : stored === APP_NAME ? "default" : "own";
   const [ownOpen, setOwnOpen] = useState(false);
   const mode: NameMode = ownOpen ? "own" : saved;
   const { draft, setDraft, dirty, reset } = useDraft(saved === "own" ? stored : "");
   const errors = fieldErrors(save.error);
   const options: { id: NameMode; label: string; sub?: string }[] = [
     ...(brand ? [{ id: "brand" as const, label: brand, sub: t("settings.app.nameBrand") }] : []),
-    { id: "mikan", label: "mikan" },
+    { id: "default", label: APP_NAME },
     { id: "own", label: t("settings.app.nameOwn") },
   ];
   const pick = (m: NameMode) => {
@@ -161,7 +164,7 @@ function AppNameChoice({ s }: { s: Schemas["SettingsView"] }) {
     }
     setOwnOpen(false);
     reset();
-    const value = m === "brand" ? "" : "mikan";
+    const value = m === "brand" ? "" : APP_NAME;
     if (value !== s.panel_app_name) save.mutate({ panel_app_name: value });
   };
   const submit = (e: FormEvent) => {

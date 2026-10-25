@@ -31,7 +31,7 @@ func TestManifestUnderTheAdminPathOnly(t *testing.T) {
 		}
 		return m.Name
 	}
-	if got := name(); got != "mikan" {
+	if got := name(); got != "ВПНыч" {
 		t.Fatalf("no brand: %q", got)
 	}
 	if err := settings.Set(ctx, set, settings.KeyBrand, "AuraVPN"); err != nil {

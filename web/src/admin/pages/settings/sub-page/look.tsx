@@ -20,11 +20,11 @@ function ColorField({ id, label, value, onChange, error, hint }: { id: string; l
         <input
           type="color"
           className="h-11 w-11 shrink-0 cursor-pointer rounded-[var(--r-md)] border border-[var(--hairline)] bg-[var(--surface)] p-1"
-          value={valid ? value.trim().toLowerCase() : "#f07a2e"}
+          value={valid ? value.trim().toLowerCase() : "#1f9e8e"}
           onChange={(e) => onChange(e.target.value.toUpperCase())}
           aria-label={t("settings.page.colorPick", { name: label })}
         />
-        <input id={id} className="input mono max-w-[140px]" value={value} maxLength={7} placeholder="#F07A2E" autoComplete="off" spellCheck={false} onChange={(e) => onChange(e.target.value)} aria-invalid={!!error || (!!value.trim() && !valid)} />
+        <input id={id} className="input mono max-w-[140px]" value={value} maxLength={7} placeholder="#1F9E8E" autoComplete="off" spellCheck={false} onChange={(e) => onChange(e.target.value)} aria-invalid={!!error || (!!value.trim() && !valid)} />
       </div>
     </Field>
   );
@@ -103,7 +103,7 @@ export function LookSection({ draft, setDraft, set, errors, accentMissing, backg
             onChange={(accent) => {
               setLook({ accent });
               // The brand's colour starts as the palette's, not as an empty field to fill.
-              if (accent === "brand" && !COLOR.test(draft.brand_accent.trim())) setDraft((d) => ({ ...d, brand_accent: "#F07A2E" }));
+              if (accent === "brand" && !COLOR.test(draft.brand_accent.trim())) setDraft((d) => ({ ...d, brand_accent: "#1F9E8E" }));
             }}
             options={[
               { value: "theme", label: t("settings.page.accentTheme") },
@@ -131,7 +131,7 @@ export function LookSection({ draft, setDraft, set, errors, accentMissing, backg
             onChange={(kind) => {
               // A first colour or gradient starts from the theme's own background.
               const dark = look.mode === "dark";
-              setBg({ kind, from: bg.from || (kind === "image" ? "" : dark ? "#0D1118" : "#FBF1E8"), to: bg.to || (kind === "gradient" ? (dark ? "#3A2418" : "#FFCBA6") : "") });
+              setBg({ kind, from: bg.from || (kind === "image" ? "" : dark ? "#0B141B" : "#EAF4F2"), to: bg.to || (kind === "gradient" ? (dark ? "#3A2418" : "#FFCBA6") : "") });
             }}
             options={[
               { value: "theme", label: t("settings.page.bgTheme") },

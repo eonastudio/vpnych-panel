@@ -49,7 +49,7 @@ function apply(theme: Theme) {
   root.dataset.tone = isDark(theme) ? "dark" : "light";
   // The browser's own bars (Android, Safari) take the page's colour.
   const bg = getComputedStyle(root).getPropertyValue("--bg").trim();
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", bg || "#fbf1e8");
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", bg || "#eaf4f2");
 }
 
 let following = false;

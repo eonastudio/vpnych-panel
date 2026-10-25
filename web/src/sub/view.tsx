@@ -147,7 +147,7 @@ function block(b: PageBlock, p: BlocksProps): ReactNode {
 
 /** A block's heading: the admin's own, or its usual one. */
 function Heading({ children, className = "mb-3" }: { children: ReactNode; className?: string }) {
-  return <h2 className={`${className} text-[15px] font-semibold`}>{children}</h2>;
+  return <h2 className={`sub-heading ${className} text-[15px] font-semibold`}>{children}</h2>;
 }
 
 function Status({ info, selling }: { info: Info; selling: boolean }) {
@@ -159,7 +159,7 @@ function Status({ info, selling }: { info: Info; selling: boolean }) {
   const support = safeHref(info.support_url, { tg: true });
   return (
     <section className="glass sub-card reveal p-4">
-      <h1 className="font-display text-xl leading-7 font-medium tracking-tight">{t(`sub.status.${info.state}`, { name: firstName })}</h1>
+      <h1 className="sub-title font-display text-xl leading-7 font-medium tracking-tight">{t(`sub.status.${info.state}`, { name: firstName })}</h1>
       <div className="mt-2 flex items-center justify-between gap-2 text-[13px] text-[var(--ink-600)]">
         <span>{info.expires_at ? t("sub.until", { date: dateLong(info.expires_at) }) : t("sub.forever")}</span>
         {left && left.tone !== "bad" ? <Pill tone={tone}>{left.text}</Pill> : null}

@@ -3,7 +3,7 @@
  * backdrop, the glass, the inks, the accent ramp and, on a dark theme, the status colours.
  *
  * Three layers, in this order, every selector one attribute so the later one wins:
- *  1. the light base (:root and [data-tone="light"]): Mikan, every token;
+ *  1. the light base (:root and [data-tone="light"]): ВПНыч, every token;
  *  2. the dark base ([data-tone="dark"]): what every dark theme shares;
  *  3. one block per theme ([data-theme="…"]): only what makes it itself.
  *
@@ -21,14 +21,14 @@
   --font-ui-stack: "Onest Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono-stack: "JetBrains Mono Variable", ui-monospace, "SFMono-Regular", Consolas, monospace;
 
-  --bg: #fbf1e8;
+  --bg: #eaf4f2;
   --ink-900: #161a24; --ink-800: #252b38; --ink-700: #394050; --ink-600: #4a5263;
   --ink-500: #5c6474; --ink-400: #666d7b; --ink-300: #a6adb8; --ink-200: #d0d4db;
   --ink-100: #e7e9ed; --ink-50: #f2f3f5;
   --fill: var(--ink-900); --fill-hover: var(--ink-700); --on-fill: #fff; --on-danger: #fff;
   --code-bg: #161a24; --code-fg: #e7e9ed;
-  --mikan-50: #fff3ea; --mikan-100: #ffe4d0; --mikan-200: #ffcba6; --mikan-400: #f7964f;
-  --mikan-500: #f07a2e; --mikan-600: #db6317; --mikan-700: #b24c0c;
+  --mikan-50: #e6f6f3; --mikan-100: #c8ece6; --mikan-200: #9fdcd2; --mikan-400: #2bb3a1;
+  --mikan-500: #1f9e8e; --mikan-600: #17877a; --mikan-700: #10685e;
   --leaf-50: #e4f4eb; --leaf-500: #2f9e6b; --leaf-700: #1f7650;
   --lagoon-50: #e0f1f4; --lagoon-400: #58afbe; --lagoon-500: #2b8c9e; --lagoon-600: #247685;
   --honey-50: #fcf1da; --honey-500: #e0a021; --honey-600: #8f5e06;
@@ -57,12 +57,12 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-spring: cubic-bezier(0.3, 1.3, 0.6, 1);
 
-  /* "Dawn": mandarin, rose and honey from the left, lilac and sky from the right. */
-  --glow-a: rgba(255, 138, 72, 0.72);
-  --glow-b: rgba(255, 122, 150, 0.42);
-  --glow-c: rgba(255, 196, 100, 0.55);
-  --glow-d: rgba(158, 142, 255, 0.42);
-  --glow-e: rgba(98, 184, 230, 0.48);
+  /* "Lagoon": teal, aqua and mint from the left, steel blue and deep teal from the right. */
+  --glow-a: rgba(43, 179, 161, 0.55);
+  --glow-b: rgba(96, 214, 196, 0.38);
+  --glow-c: rgba(130, 220, 200, 0.42);
+  --glow-d: rgba(70, 140, 200, 0.34);
+  --glow-e: rgba(40, 110, 115, 0.5);
   --glow-opacity: 1;
   --grain-blend: multiply; --grain-opacity: 0.055;
   /* A theme's own drawing over the glows (stars, waves, a grid); none by default. */
@@ -244,24 +244,24 @@
 
 /* ---------- dark ---------- */
 
-/* Blue-black with the mandarin: the dawn turned down. */
+/* ВПНыч at night: deep blue-green with the teal accent, the lagoon turned down. */
 [data-theme="midnight"] {
-  --bg: #0d1118;
+  --bg: #0b141b;
   --ink-900: #f4f7fb; --ink-800: #e3e8ef; --ink-700: #c4ccd7; --ink-600: #a8b2c0;
   --ink-500: #8b97a8; --ink-400: #7a8697; --ink-300: #515d6d; --ink-200: #394453;
   --ink-100: #252e3a; --ink-50: #1b232e;
-  --fill: #ff843d; --on-fill: #161a24;
-  --mikan-50: #3a2418; --mikan-100: #55311e; --mikan-200: #774322; --mikan-400: #ff9a57;
-  --mikan-500: #ff843d; --mikan-600: #ff9b5d; --mikan-700: #ffb27a;
-  --surface: rgba(22, 29, 39, 0.92); --surface-soft: rgba(24, 31, 42, 0.72);
-  --surface-hover: rgba(40, 50, 64, 0.96); --surface-solid: #161d27; --raised: #263142;
-  --glass: rgba(24, 31, 42, 0.72); --glass-strong: rgba(22, 29, 39, 0.92);
-  --glass-edge: rgba(255, 132, 61, 0.18); --glass-highlight: rgba(255, 132, 61, 0.18);
-  --glow-a: rgba(255, 138, 72, 0.72);
-  --glow-b: rgba(255, 122, 150, 0.42);
-  --glow-c: rgba(255, 196, 100, 0.55);
-  --glow-d: rgba(158, 142, 255, 0.42);
-  --glow-e: rgba(98, 184, 230, 0.48);
+  --fill: #2bb3a1; --on-fill: #0b141b;
+  --mikan-50: #10302c; --mikan-100: #15423c; --mikan-200: #1b5a52; --mikan-400: #3cc4b1;
+  --mikan-500: #2bb3a1; --mikan-600: #4fcbb9; --mikan-700: #7ad9cb;
+  --surface: rgba(17, 30, 39, 0.92); --surface-soft: rgba(19, 33, 43, 0.72);
+  --surface-hover: rgba(32, 50, 61, 0.96); --surface-solid: #111e27; --raised: #1d313d;
+  --glass: rgba(19, 33, 43, 0.72); --glass-strong: rgba(17, 30, 39, 0.92);
+  --glass-edge: rgba(43, 179, 161, 0.18); --glass-highlight: rgba(43, 179, 161, 0.18);
+  --glow-a: rgba(43, 179, 161, 0.55);
+  --glow-b: rgba(96, 214, 196, 0.38);
+  --glow-c: rgba(130, 220, 200, 0.42);
+  --glow-d: rgba(70, 140, 200, 0.34);
+  --glow-e: rgba(40, 110, 115, 0.5);
   --glow-opacity: 0.3;
 }
 
