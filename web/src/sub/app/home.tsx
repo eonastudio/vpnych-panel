@@ -16,11 +16,11 @@ import {
   IconArrowRight,
   IconBook,
   IconCheck,
+  IconChevronDown,
   IconDevices,
   IconDots,
   IconHeadphones,
   IconHelp,
-  IconInfo,
   IconLayers,
   IconLogout,
   IconPlus,
@@ -252,9 +252,13 @@ function Announce({ info, title }: { info: Info; title?: string }) {
   );
 }
 
+/** The devices the card lists before "show all". */
+const DEVICES_SHOWN = 3;
+
 function DevicesCard({ onOpen }: { onOpen: (d: Device) => void }) {
   const info = useInfo();
   const { push, toast } = useStore();
+  const [all, setAll] = useState(false);
   const list = info.devices ?? [];
   const online = info.device_mode === "online";
   const full = !online && info.device_limit > 0 && list.length >= info.device_limit;
@@ -304,7 +308,7 @@ function DevicesCard({ onOpen }: { onOpen: (d: Device) => void }) {
         </div>
       ) : null}
       {list.length === 0 ? <div className="empty-devices">{t("sub.app.devicesEmpty")}</div> : null}
-      {list.map((d) => {
+      {(all ? list : list.slice(0, DEVICES_SHOWN)).map((d) => {
         const meta = deviceDetails(d, !d.shared);
         const platform = platformOf(d.os);
         return (
@@ -330,6 +334,20 @@ function DevicesCard({ onOpen }: { onOpen: (d: Device) => void }) {
           </button>
         );
       })}
+      {list.length > DEVICES_SHOWN ? (
+        <button
+          type="button"
+          className="devices-more"
+          aria-expanded={all}
+          onClick={() => {
+            haptic();
+            setAll((a) => !a);
+          }}
+        >
+          {all ? t("sub.app.devicesLess") : t("sub.app.devicesMore", { n: list.length })}
+          <IconChevronDown size={22} className={all ? "flip" : ""} aria-hidden />
+        </button>
+      ) : null}
     </Card>
   );
 }
@@ -521,18 +539,38 @@ function HelpCard() {
   const docs = page.docs.length > 0 && !!subURL;
   const support = safeHref(info?.support_url, { tg: true });
   if (!support && !docs) return null;
+  const rows = [
+    docs ? { key: "docs", icon: <IconBook size={28} />, title: t("sub.docs"), text: t("sub.app.helpDocsText"), go: () => push({ name: "docs" }) } : null,
+    support ? { key: "support", icon: <IconHeadphones size={28} />, title: t("sub.support"), text: t("sub.app.helpSupportText"), go: () => openOutside(support) } : null,
+    info?.reissue ? { key: "reissue", icon: <IconRefresh size={28} />, title: t("sub.reissueTitle"), text: t("sub.app.helpReissueText"), go: () => push({ name: "reissue" }) } : null,
+  ].filter((r) => r !== null);
   return (
-    <Card className="invite-card art-card">
-      <PaperPlane className="art art-left" />
-      <h2 className="h-display">{t("sub.app.helpTop")}</h2>
-      <div className="art-actions">
-        {support ? <Button onClick={() => openOutside(support)}>{t("sub.app.write")}</Button> : <Button onClick={() => push({ name: "docs" })}>{t("sub.docs")}</Button>}
-        {support && docs ? (
-          <Button className="square" aria-label={t("sub.docs")} onClick={() => push({ name: "docs" })}>
-            <IconInfo />
-          </Button>
-        ) : null}
+    <Card className="help-card">
+      <div className="help-head">
+        <PaperPlane className="art help-art" />
+        <h2 className="h-display">
+          {t("sub.app.helpTop")} <em>{t("sub.app.helpBottom")}</em>
+        </h2>
+        <p className="muted-text">{t("sub.app.helpText")}</p>
       </div>
+      {rows.map((r) => (
+        <button
+          key={r.key}
+          type="button"
+          className="device-row help-row"
+          onClick={() => {
+            haptic();
+            r.go();
+          }}
+        >
+          <span className="device-icon">{r.icon}</span>
+          <span className="device-text">
+            <b>{r.title}</b>
+            <small>{r.text}</small>
+          </span>
+          <IconArrowRight className="muted" size={24} />
+        </button>
+      ))}
     </Card>
   );
 }

@@ -113,7 +113,14 @@ function CheckoutPlan({ plan }: { plan: Plan }) {
 
       {step === 1 ? (
         <>
-          <div className="amount-big">{offer ? price : listPrice(plan.offers[0]!)}</div>
+          {offer ? (
+            <div className="amount-big">{price}</div>
+          ) : (
+            <div className="buy-title">
+              <h1 className="h-display">{t("sub.app.buyTitle")}</h1>
+              <small>{t("sub.app.buyPick")}</small>
+            </div>
+          )}
           <Card className="list-card">
             {plan.offers.length > 1 ? (
               <div className="card-pad pb0">

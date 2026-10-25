@@ -30,6 +30,8 @@ func (h *Handler) miniApp(w http.ResponseWriter, r *http.Request, rest string) {
 		hd := w.Header()
 		hd.Set("Content-Security-Policy", strings.Replace(hd.Get("Content-Security-Policy"), "frame-ancestors 'none'", "frame-ancestors https://web.telegram.org", 1))
 		hd.Del("X-Frame-Options")
+		// The user's photo comes from t.me, which redirects it to Telegram's CDN.
+		hd.Set("Content-Security-Policy", strings.Replace(hd.Get("Content-Security-Policy"), "img-src 'self' data: blob:", "img-src 'self' data: blob: "+telegramImages, 1))
 		cfg, _ := h.cfg(r.Context())
 		h.servePage(w, r, cfg)
 	case r.Method == http.MethodPost && rest == "session" && sameOrigin(r):
@@ -588,3 +590,6 @@ func (h *Handler) miniAppReissue(w http.ResponseWriter, r *http.Request) {
 		fail(http.StatusInternalServerError, "internal")
 	}
 }
+
+// telegramImages are where the Mini App's user photo comes from: t.me and the CDN it redirects to.
+const telegramImages = "https://t.me https://*.telegram.org https://*.telegram-cdn.org https://*.telesco.pe"

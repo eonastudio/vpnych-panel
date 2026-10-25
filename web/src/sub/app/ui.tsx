@@ -1,5 +1,6 @@
 // The Mini App's building blocks: buttons, cards, the two-line titles, the bottom sheet.
 import { useState, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { t } from "../../i18n";
 import { tgEvent } from "../net";
 import { IconChevronsLeft, IconDots, IconLoader } from "./icons";
@@ -72,9 +73,11 @@ export function TopBar({ label, onBack, menu }: { label: string; onBack?: () => 
         <IconChevronsLeft size={24} aria-hidden />
         <span>{label}</span>
       </button>
-      <button type="button" className="icon-btn" onClick={() => setOpen((o) => !o)} aria-label={t("sub.app.menu")}>
-        <IconDots />
-      </button>
+      {menu ? (
+        <button type="button" className="icon-btn" onClick={() => setOpen((o) => !o)} aria-label={t("sub.app.menu")}>
+          <IconDots />
+        </button>
+      ) : null}
       {open && menu ? (
         <div className="topbar-menu" onClick={() => setOpen(false)}>
           {menu}
@@ -92,9 +95,11 @@ export function Radio({ checked }: { checked: boolean }) {
   );
 }
 
+/** The Telegram photo; the name's first letter when there is none or it doesn't load. */
 export function Avatar({ url, name, size = 60 }: { url?: string; name: string; size?: number }) {
-  return url ? (
-    <img className="avatar" src={url} alt="" width={size} height={size} style={{ width: size, height: size }} />
+  const [broken, setBroken] = useState<string | null>(null);
+  return url && broken !== url ? (
+    <img className="avatar" src={url} alt="" width={size} height={size} style={{ width: size, height: size }} referrerPolicy="no-referrer" onError={() => setBroken(url)} />
   ) : (
     <span className="avatar avatar-fallback" style={{ width: size, height: size, fontSize: size * 0.4 }} aria-hidden>
       {name.trim().charAt(0).toUpperCase() || "?"}
@@ -102,14 +107,16 @@ export function Avatar({ url, name, size = 60 }: { url?: string; name: string; s
   );
 }
 
+/** A bottom sheet, on <body>: inside .app it would be scaled down twice. */
 export function Sheet({ onClose, label, children }: { onClose: () => void; label: string; children: ReactNode }) {
-  return (
+  return createPortal(
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" role="dialog" aria-modal="true" aria-label={label} onClick={(e) => e.stopPropagation()}>
         <div className="sheet-grip" />
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

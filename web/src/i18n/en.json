@@ -2666,7 +2666,15 @@
       "writeSupport": "Write to support",
       "promoPlaceholder": "For example: SUMMER",
       "freeTop": "Try it",
-      "freeBottom": "for free"
+      "freeBottom": "for free",
+      "helpText": "Setting up, paying, moving to a new device — we'll help with all of it.",
+      "helpDocsText": "How to set up a device",
+      "helpSupportText": "A real person replies",
+      "helpReissueText": "If the link got into the wrong hands",
+      "devicesMore": "Show all · {n}",
+      "devicesLess": "Collapse",
+      "buyTitle": "Buy a plan",
+      "buyPick": "Pick a plan below"
     }
   },
   "nodes": {

@@ -298,43 +298,43 @@ export function Promo() {
   return (
     <div className="screen">
       <TopBar label={t("sub.app.back")} />
-      <Title top={t("sub.app.promoTop")} bottom={t("sub.app.promoBottom")} bg={<IconTicket size={280} strokeWidth={2.2} />} />
-      <Card className="list-card">
-        <div className="card-pad">
-          <form onSubmit={submit} noValidate>
-            <label className="label">{t("sub.promoCode")}</label>
-            <input
-              className="input"
-              value={code}
-              placeholder={t("sub.app.promoPlaceholder")}
-              autoComplete="off"
-              autoCapitalize="characters"
-              spellCheck={false}
-              aria-invalid={!!error}
-              onChange={(e) => setCode(e.target.value)}
-            />
-            {error ? (
-              <p className="error-text" role="alert">
-                {error}
-              </p>
-            ) : null}
-            <Button variant="primary" type="submit" className="mt" loading={busy} disabled={!code.trim()}>
-              {t("sub.app.activate")}
-            </Button>
-          </form>
-          {promoCode ? (
-            <div className="row-2 mt" style={{ alignItems: "center" }}>
-              <p className="ok-text" style={{ margin: 0, flex: 1 }}>
-                {t("sub.promoSelected", { code: promoCode })}
-              </p>
-              <Button variant="ghost" onClick={() => setPromoCode("")}>
-                {t("sub.promoClear")}
-              </Button>
-            </div>
+      <Title top={t("sub.app.promoTop")} bottom={t("sub.app.promoBottom")} />
+      <Card className="card-pad">
+        <form onSubmit={submit} noValidate>
+          <label className="label" htmlFor="promo-code">
+            {t("sub.promoCode")}
+          </label>
+          <input
+            id="promo-code"
+            className="input"
+            value={code}
+            placeholder={t("sub.app.promoPlaceholder")}
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            aria-invalid={!!error}
+            onChange={(e) => setCode(e.target.value)}
+          />
+          {error ? (
+            <p className="error-text" role="alert">
+              {error}
+            </p>
           ) : null}
-        </div>
-        <div className="divider" />
-        <div className="card-pad">
+          <Button variant={code.trim() ? "primary" : "glass"} type="submit" className="mt" loading={busy} disabled={!code.trim()}>
+            {t("sub.app.activate")}
+          </Button>
+        </form>
+        {promoCode ? (
+          <div className="promo-chosen">
+            <IconTicket size={24} aria-hidden />
+            <span>{t("sub.promoSelected", { code: promoCode })}</span>
+            <button type="button" onClick={() => setPromoCode("")}>
+              {t("sub.promoClear")}
+            </button>
+          </div>
+        ) : null}
+      </Card>
+      <Card className="card-pad">
           <label className="label">{t("sub.promoHistory")}</label>
           {history === null ? (
             <div className="empty">
@@ -357,7 +357,6 @@ export function Promo() {
               ))}
             </ul>
           )}
-        </div>
       </Card>
     </div>
   );

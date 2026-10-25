@@ -2666,7 +2666,15 @@
       "writeSupport": "Написать в поддержку",
       "promoPlaceholder": "Например: SUMMER",
       "freeTop": "Попробуйте",
-      "freeBottom": "бесплатно"
+      "freeBottom": "бесплатно",
+      "helpText": "Подключение, оплата, переезд на новое устройство — подскажем во всём.",
+      "helpDocsText": "Как подключить устройство",
+      "helpSupportText": "Ответит живой человек",
+      "helpReissueText": "Если ссылка попала не в те руки",
+      "devicesMore": "Показать все · {n}",
+      "devicesLess": "Свернуть",
+      "buyTitle": "Покупка тарифа",
+      "buyPick": "Выберите тариф ниже"
     }
   },
   "nodes": {

@@ -24,18 +24,22 @@ const AFTER_PAYMENT_MS = [2_000, 5_000, 10_000];
 
 type Insets = { top?: number; bottom?: number; left?: number; right?: number };
 
-/** Telegram's two safe areas, summed into --tg-top and --tg-bottom on <html>. */
+/** Telegram's two safe areas, summed into --tg-top, --tg-bottom, --tg-left and --tg-right on
+ *  <html>. They are read inside the zoomed layout, so they are divided by the zoom to stay true
+ *  screen pixels: otherwise a phone's fullscreen header buttons would cover the top. */
 const insets: { safe?: Insets; content?: Insets } = {};
+let zoom = 1;
 function applyInsets() {
   const root = document.documentElement.style;
-  const sum = (side: "top" | "bottom") => (insets.safe?.[side] ?? 0) + (insets.content?.[side] ?? 0);
-  root.setProperty("--tg-top", `${sum("top")}px`);
-  root.setProperty("--tg-bottom", `${sum("bottom")}px`);
+  const sum = (side: keyof Insets) => (insets.safe?.[side] ?? 0) + (insets.content?.[side] ?? 0);
+  for (const side of ["top", "bottom", "left", "right"] as const) root.setProperty(`--tg-${side}`, `${sum(side) / zoom}px`);
 }
 
 /** The layout is drawn for a 560px column: a narrower phone gets it scaled down. */
 function applyZoom() {
-  document.documentElement.style.setProperty("--z", String(Math.min(1, window.innerWidth / 560)));
+  zoom = Math.min(1, window.innerWidth / 560);
+  document.documentElement.style.setProperty("--z", String(zoom));
+  applyInsets();
 }
 
 const page = readPage();
