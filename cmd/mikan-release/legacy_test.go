@@ -22,7 +22,9 @@ func TestLegacyContract(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	good := string(data)
+	// The fork's releases name its own image; the contract is the one of upstream's clients.
+	upstream := func(b []byte) string { return strings.Replace(string(b), "ghcr.io/eonastudio/", legacyImagePrefix, 1) }
+	good := upstream(data)
 	check := func(text string) error { return legacyCheck([]byte(text), release.Sign([]byte(text), f.priv), f.pub) }
 	if err := check(good); err != nil {
 		t.Fatalf("the release command's own manifest: %v", err)
@@ -33,7 +35,7 @@ func TestLegacyContract(t *testing.T) {
 	}
 	withMin, _ := os.ReadFile(filepath.Join(f.dir, "release", "manifest.json"))
 	for name, text := range map[string]string{
-		"a minimum installer":  string(withMin),
+		"a minimum installer":  upstream(withMin),
 		"three numbers":        strings.Replace(good, `"0.5.0.1"`, `"0.6.0"`, 1),
 		"a pre-release":        strings.Replace(good, `"0.5.0.1"`, `"0.5.0.2-rc.1"`, 1),
 		"a field it never had": strings.Replace(good, `"version"`, `"channel": "stable", "rollout": {"x": [1, 2]}, "version"`, 1),

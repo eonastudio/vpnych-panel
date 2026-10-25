@@ -17,11 +17,9 @@ import (
 
 // seed is the index the first release that keeps one starts from, when the "updates"
 // release has none yet: the releases before it, each with the lowest version it updates
-// from directly.
-var seed = []release.Entry{
-	{Version: "0.4.5", Channel: release.Stable, Manifest: manifestURL("v0.4.5"), From: "0.4.0"},
-	{Version: "0.5.0.0", Channel: release.Stable, Manifest: manifestURL("v0.5.0.0"), From: "0.4.5"},
-}
+// from directly. ВПНыч's releases start with the fork, so its first index is the first
+// release alone.
+var seed = []release.Entry{}
 
 func manifestURL(tag string) string {
 	return fmt.Sprintf("https://github.com/%s/releases/download/%s/manifest.json", release.Repo, tag)

@@ -7,8 +7,8 @@ name: release
 #     update check and the installer trust, and install.sh for the one-line install;
 #   - the release's entry in the signed release index (index.json on the "updates"
 #     pre-release), where updaters look first; "from" comes from .github/upgrade-from.
-# A stable manifest must pass the legacy contract (mikan-release legacy-check) before it
-# is published: mikan 0.4.5 and 0.5.0.0 read "latest" and nothing else.
+# ВПНыч signs with its own release keys, so upstream mikan servers never read these
+# releases and the legacy contract (mikan-release legacy-check) is not checked here.
 # The image is pushed under its version only; :latest moves to it after the release is
 # published (job latest), so a failed installer build or signature leaves :latest where it
 # was. A pre-release tag (vX.Y.Z.R-rc.N) is published as a pre-release and does not move it.
@@ -250,12 +250,6 @@ jobs:
             -asset x86_64=dist/mikan-x86_64 -asset aarch64=dist/mikan-aarch64 \
             -min-installer-file .github/min-installer -out dist
           go run ./cmd/mikan-release verify dist/manifest.json
-          # A stable release becomes "latest", which mikan 0.4.5 and 0.5.0.0 read for as
-          # long as they run: one they would refuse stops here, before it is published.
-          case "$GITHUB_REF_NAME" in
-            *-*) ;;
-            *) go run ./cmd/mikan-release legacy-check dist/manifest.json ;;
-          esac
           cp installer/install.sh dist/install.sh
       - name: release
         env:
@@ -263,7 +257,7 @@ jobs:
         run: |
           pre=""
           case "$GITHUB_REF_NAME" in *-*) pre="--prerelease" ;; esac
-          gh release create "$GITHUB_REF_NAME" $pre --verify-tag --title "mikan ${GITHUB_REF_NAME#v}" --notes-file dist/notes.md \
+          gh release create "$GITHUB_REF_NAME" $pre --verify-tag --title "ВПНыч ${GITHUB_REF_NAME#v}" --notes-file dist/notes.md \
             dist/install.sh dist/mikan-x86_64 dist/mikan-aarch64 dist/manifest.json dist/manifest.json.sig
       # The release index (internal/release/index.go) lives on the "updates" pre-release,
       # which never becomes "latest". The current index is carried on only with a valid

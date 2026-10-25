@@ -23,10 +23,11 @@ import (
 // releases now; the second is trusted ahead, so the release workflow can move to it and leave
 // no panel or installer behind (installer/src/release.rs and install.sh hold the same list).
 // The private halves live only in the RELEASE_SIGNING_KEY secret of the release workflow and
-// with the maintainer.
+// with the maintainer. These are ВПНыч's own keys: the fork's builds trust its releases, not
+// upstream mikan's.
 var ReleaseKeys = []string{
-	"Z3wSIPBSaJxh5CsGO8eINI0aM0kyrQ46EcJSNeH85W8=",
-	"J4DbLqhnFdx8ncEiF4BQOW1aucukNCCgMhcZ18pCWFw=",
+	"7nXf2uCDOlyVVGXmb+RigGpQZHMhUvLBREHNSnJskN4=",
+	"uIBpXK/WL72Plz0/LMNf3HvvSC3gQwfPxM4Ha1kgaW4=",
 }
 
 // CatalogKey and CommunityKey are the public halves of the keys of the marketplace's signed
@@ -69,7 +70,7 @@ func KeyFingerprint() string {
 }
 
 // Repo is where releases are published.
-const Repo = "Miroshka000/mikan"
+const Repo = "eonastudio/vpnych-panel"
 
 // InstallCommand installs mikan from the latest release; run on the server.
 const InstallCommand = "curl -fsSL https://github.com/" + Repo + "/releases/latest/download/install.sh | sudo bash"
