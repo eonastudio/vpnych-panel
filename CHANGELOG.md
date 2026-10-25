@@ -3,6 +3,12 @@
 Each release has a section in English and in Russian; the release workflow puts them in
 the signed manifest, and the panel shows the one in its language.
 
+## 0.5.2.2-rc.6
+### en
+- **Templates instead of themes on the subscription page and in the Mini App**: the built-in ВПНыч, Classic, Light, Minimal and Neon plus up to 8 of your own. One is active, the others are drafts seen in the editor's preview. Each template has its own colours, font and background, blocks and their order, any text or button in Russian and English, banners (image, title, text, button, place, Mini App or browser, schedule) and CSS.
+### ru
+- **Шаблоны вместо тем на странице подписки и в Mini App**: встроенные ВПНыч, Классика, Светлый, Минимал и Неон и до 8 своих. Активный один, остальные — черновики, их видно в превью редактора. У каждого шаблона свои цвета, шрифт и фон, блоки и их порядок, любые тексты и кнопки на русском и английском, баннеры (картинка, заголовок, текст, кнопка, место, Mini App или браузер, расписание) и CSS.
+
 ## 0.5.2.2-rc.5
 ### en
 - **The Mini App redrawn after the ВПНыч concept**: the home screen, the checkout, the setup wizard, help, promo codes, the new link and the greeting screen have the concept's layout and look one to one. Payments and everything else work as before; the subscription page in a browser is unchanged.
