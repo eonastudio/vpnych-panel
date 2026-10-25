@@ -1,7 +1,8 @@
 // The Mini App's building blocks: buttons, cards, the two-line titles, the bottom sheet.
-import { ChevronsLeft, LoaderCircle } from "lucide-react";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { useState, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { t } from "../../i18n";
 import { tgEvent } from "../net";
+import { IconChevronsLeft, IconDots, IconLoader } from "./icons";
 import { useStore } from "./store";
 
 export const haptic = () => tgEvent("web_app_trigger_haptic_feedback", { type: "impact", impact_style: "light" });
@@ -28,7 +29,7 @@ export function Button({
         onClick?.(e);
       }}
     >
-      {loading ? <LoaderCircle className="spin" aria-hidden /> : children}
+      {loading ? <IconLoader aria-hidden /> : children}
     </button>
   );
 }
@@ -54,9 +55,10 @@ export function Title({ top, bottom, bg }: { top: string; bottom: string; bg?: R
   );
 }
 
-/** The bar on top of an inner screen: « BACK. */
-export function TopBar({ label, onBack }: { label: string; onBack?: () => void }) {
+/** The bar on top of an inner screen: « STEP 1 OF 3 ••• or « BACK •••; the dots open menu, when there is one. */
+export function TopBar({ label, onBack, menu }: { label: string; onBack?: () => void; menu?: ReactNode }) {
   const { back } = useStore();
+  const [open, setOpen] = useState(false);
   return (
     <div className="topbar glass">
       <button
@@ -67,9 +69,17 @@ export function TopBar({ label, onBack }: { label: string; onBack?: () => void }
           (onBack ?? back)();
         }}
       >
-        <ChevronsLeft size={24} aria-hidden />
+        <IconChevronsLeft size={24} aria-hidden />
         <span>{label}</span>
       </button>
+      <button type="button" className="icon-btn" onClick={() => setOpen((o) => !o)} aria-label={t("sub.app.menu")}>
+        <IconDots />
+      </button>
+      {open && menu ? (
+        <div className="topbar-menu" onClick={() => setOpen(false)}>
+          {menu}
+        </div>
+      ) : null}
     </div>
   );
 }

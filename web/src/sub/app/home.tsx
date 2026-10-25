@@ -1,22 +1,41 @@
-// The Mini App's home: who is signed in, the subscription's term and traffic, its devices,
-// the promo code and the help; for an account without a subscription, the ways to get one.
-import { BookOpen, Ellipsis, Hourglass, Laptop, Layers, LifeBuoy, Pencil, Plus, RefreshCw, Smartphone, Ticket, X } from "lucide-react";
-import { useId, useState, type FormEvent } from "react";
+// The Mini App's home: who is signed in, the subscription's term, its devices, the promo
+// code and the help; for an account without a subscription, the ways to get one.
+import { useId, useRef, useState } from "react";
 import { t, tMaybe } from "../../i18n";
 import { DEVICE_NAME_MAX, desktopOS, deviceDetails, deviceLabel, reportedName } from "../../lib/devices";
-import { ago, bytes, dateLong, dateShort, expiryText, period, time } from "../../lib/format";
+import { ago, bytes, dateShort, expiryText, period, time } from "../../lib/format";
 import { safeHref } from "../../lib/url";
-import { initData, openOutside, outside, postJSON, subRoot, tgEvent } from "../net";
-import { FREE_FAIL, type ShopData } from "../shop";
+import { initData, openOutside, postJSON, subRoot, tgEvent } from "../net";
+import { FREE_FAIL, groupText, listPrice, type Offer, type ShopData } from "../shop";
 import type { Device, Info } from "../types";
 import { PaperPlane, RubleTags } from "./art";
+import {
+  IconArrowRight,
+  IconBook,
+  IconCheck,
+  IconDevices,
+  IconDots,
+  IconHeadphones,
+  IconHelp,
+  IconInfo,
+  IconLayers,
+  IconLogout,
+  IconPlus,
+  IconRefresh,
+  IconSliders,
+  IconTicket,
+  IconTrash,
+  IconX,
+  PlatformIcon,
+} from "./icons";
+import { usePromo } from "./promo";
 import { useInfo, useStore, type ShopKind } from "./store";
-import { Avatar, Button, Card, Footnote, Sheet, Title } from "./ui";
+import { Avatar, Button, Card, Footnote, haptic, Sheet, Title } from "./ui";
 
 type TgUser = { first_name?: string; last_name?: string; username?: string; photo_url?: string };
 
 /** The account Telegram signed the launch data for. */
-const tgUser: TgUser = (() => {
+export const tgUser: TgUser = (() => {
   try {
     return (JSON.parse(new URLSearchParams(initData).get("user") ?? "{}") as TgUser) ?? {};
   } catch {
@@ -24,10 +43,7 @@ const tgUser: TgUser = (() => {
   }
 })();
 
-function greeting(): string {
-  const h = new Date().getHours();
-  return t(h < 5 ? "sub.app.greetNight" : h < 12 ? "sub.app.greetMorning" : h < 18 ? "sub.app.greetDay" : h < 23 ? "sub.app.greetEvening" : "sub.app.greetNight");
-}
+export const tgFullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(" ");
 
 /** A pause in hours, whole days as days. */
 function pause(hours: number): string {
@@ -38,152 +54,203 @@ function deviceName(d: Device): string {
   return d.shared && !d.name ? t("sub.sharedPlace") : deviceLabel(d, t("sub.device"));
 }
 
-function UserHeader() {
-  const { info, push, page, subURL } = useStore();
+/** The platform of a device's icon, from the system its app reports. */
+function platformOf(os: string): string {
+  if (/ios|iphone|ipad/i.test(os)) return "ios";
+  if (/tv/i.test(os)) return "tv";
+  if (/android/i.test(os)) return "android";
+  if (/windows/i.test(os)) return "windows";
+  if (/mac|darwin/i.test(os) || desktopOS.test(os)) return "macos";
+  return "";
+}
+
+function TrafficRing({ used, total }: { used: number; total: number }) {
+  const r = 13;
+  const c = 2 * Math.PI * r;
+  const p = total > 0 ? Math.min(used / total, 1) : 1;
+  return (
+    <svg width="34" height="34" viewBox="0 0 34 34" className="ring" aria-hidden>
+      <circle cx="17" cy="17" r={r} style={{ stroke: "var(--line)" }} strokeWidth="3" fill="none" />
+      <circle cx="17" cy="17" r={r} stroke="#e8c547" strokeWidth="3" fill="none" strokeLinecap="round" strokeDasharray={`${c * Math.max(p, 0.04)} ${c}`} transform="rotate(-90 17 17)" />
+    </svg>
+  );
+}
+
+const bannerKey = (url: string) => "mikan-tg-banner:" + url;
+
+/** The account, its menu, and a limited plan's traffic under them. */
+export function UserHeader({ showBanner = true }: { showBanner?: boolean }) {
+  const { info, subs, subURL, setSubURL, push, page } = useStore();
   const [open, setOpen] = useState(false);
-  const name = tgUser.first_name || t("sub.app.guest");
+  const [hidden, setHidden] = useState(() => {
+    try {
+      return localStorage.getItem(bannerKey(subURL)) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const name = tgFullName || t("sub.app.guest");
   const support = safeHref(info?.support_url, { tg: true });
   const go = (f: () => void) => () => {
     setOpen(false);
     f();
   };
+
+  const used = info ? info.used_up + info.used_down : 0;
+  const total = info?.limit != null ? info.limit + (info.extra ?? 0) : 0;
+  const banner = showBanner && !hidden && info?.limit != null;
+  const hide = () => {
+    setHidden(true);
+    try {
+      localStorage.setItem(bannerKey(subURL), "1");
+    } catch {
+      // the banner comes back next time
+    }
+  };
+
   return (
     <div className="user-header-wrap">
-      {open ? <div className="menu-dim" onClick={() => setOpen(false)} /> : null}
-      <div className="user-header glass">
+      <div className={`user-header glass ${open ? "open" : ""}`}>
         <div className="user-row">
-          <Avatar url={tgUser.photo_url} name={name} />
+          <Avatar url={tgUser.photo_url} name={name} size={60} />
           <div className="user-names">
-            <div className="user-nick">{greeting()}</div>
             <div className="user-name">{name}</div>
+            {tgUser.username ? <div className="user-nick">@{tgUser.username}</div> : null}
           </div>
-          <button type="button" className="icon-btn" aria-label={t("sub.app.menu")} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-            {open ? <X size={26} aria-hidden /> : <Ellipsis size={26} aria-hidden />}
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={() => {
+              haptic();
+              setOpen((o) => !o);
+            }}
+            aria-label={t("sub.app.menu")}
+            aria-expanded={open}
+          >
+            <IconDots size={26} />
           </button>
         </div>
+
+        {banner && info ? (
+          <div className="trial-banner">
+            <div>
+              <b>{t("sub.app.trafficLeft", { used: bytes(used), total: bytes(total) })}</b>
+              <span>{info.resets_at ? t("sub.app.resets", { date: dateShort(info.resets_at) }) : used >= total ? t("sub.app.trafficOut") : t("sub.app.trafficNote")}</span>
+            </div>
+            <button type="button" className="ring-btn" aria-label={t("common.close")} onClick={hide}>
+              <TrafficRing used={used} total={total} />
+              <IconX size={12} />
+            </button>
+          </div>
+        ) : null}
+
         {open ? (
-          <div className="user-menu" role="menu">
+          <nav className="user-menu">
+            {subs.length > 1
+              ? subs.map((s) => {
+                  const url = subRoot + "/" + s.token;
+                  return (
+                    <button key={s.token} type="button" aria-pressed={url === subURL} onClick={go(() => setSubURL(url))}>
+                      {url === subURL ? <IconCheck /> : <IconLayers />}
+                      {s.name}
+                    </button>
+                  );
+                })
+              : null}
+            {subs.length > 1 ? <hr /> : null}
             {page.docs.length && subURL ? (
-              <button type="button" role="menuitem" onClick={go(() => push({ name: "docs" }))}>
-                <BookOpen size={22} aria-hidden /> {t("sub.docs")}
+              <button type="button" onClick={go(() => push({ name: "docs" }))}>
+                <IconBook />
+                {t("sub.docs")}
               </button>
             ) : null}
-            <button type="button" role="menuitem" onClick={go(() => push({ name: "promo" }))}>
-              <Ticket size={22} aria-hidden /> {t("sub.promoTitle")}
+            <button type="button" onClick={go(() => push({ name: "promo" }))}>
+              <IconTicket />
+              {t("sub.promoTitle")}
             </button>
             {info?.reissue ? (
-              <button type="button" role="menuitem" onClick={go(() => push({ name: "reissue" }))}>
-                <RefreshCw size={22} aria-hidden /> {t("sub.reissueTitle")}
+              <button type="button" onClick={go(() => push({ name: "reissue" }))}>
+                <IconRefresh />
+                {t("sub.reissueTitle")}
               </button>
             ) : null}
             {support ? (
-              <button type="button" role="menuitem" onClick={go(() => openOutside(support))}>
-                <LifeBuoy size={22} aria-hidden /> {t("sub.support")}
+              <button type="button" onClick={go(() => openOutside(support))}>
+                <IconHeadphones />
+                {t("sub.support")}
               </button>
             ) : null}
             <hr />
-            <button type="button" role="menuitem" className="danger" onClick={go(() => tgEvent("web_app_close"))}>
-              <X size={22} aria-hidden /> {t("common.close")}
+            <button type="button" className="danger" onClick={go(() => tgEvent("web_app_close"))}>
+              <IconLogout />
+              {t("common.close")}
             </button>
-          </div>
+          </nav>
         ) : null}
       </div>
+      {open ? <div className="menu-dim" onClick={() => setOpen(false)} /> : null}
     </div>
   );
 }
 
-function SubsSwitch() {
-  const { subs, subURL, setSubURL } = useStore();
-  if (subs.length < 2) return null;
-  return (
-    <div className="subs" role="group" aria-label={t("sub.app.subs")}>
-      {subs.map((s) => {
-        const url = subRoot + "/" + s.token;
-        return (
-          <button key={s.token} type="button" aria-pressed={url === subURL} onClick={() => setSubURL(url)}>
-            {s.name}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function StatusCard() {
+/** The subscription's term, and the way to renew it. */
+function BalanceCard() {
   const info = useInfo();
   const { shop, push } = useStore();
   const left = info.expires_at ? expiryText(info.expires_at) : null;
-  const firstName = info.name.split(/\s+/)[0] ?? "";
   const support = safeHref(info.support_url, { tg: true });
-  const selling = !!shop?.offers.length;
   const ended = info.state === "expired" || info.state === "limited" || info.state === "disabled";
-  const used = info.used_up + info.used_down;
-  const extra = info.extra ?? 0;
-  const cap = info.limit != null ? Math.max(info.limit, used) + extra : 0;
-  const leftBytes = info.limit != null ? Math.max(0, info.limit - used) + extra : null;
-  const ofTotal = (limit: number, more: number) => t("sub.of", { total: more > 0 ? t("sub.plusPackages", { limit: bytes(limit), extra: bytes(more) }) : bytes(limit) });
+  const firstName = info.name.split(/\s+/)[0] ?? "";
   return (
-    <Card className="status-card">
-      <div className="days-left">{t("sub.app.subLabel")}</div>
+    <Card className="balance-card">
+      {left ? <div className="days-left">{left.text}</div> : null}
       <div className="balance-row">
         <div className="balance">
-          <b className={left?.tone === "bad" ? "bad-tone" : left?.tone === "warn" ? "warn-tone" : ""}>{left ? left.text : "∞"}</b>
-          <span>{info.expires_at ? t("sub.app.until", { date: dateShort(info.expires_at) }) : t("sub.app.noEnd")}</span>
+          <b>{info.expires_at ? dateShort(info.expires_at) : "∞"}</b>
+          <span>{info.expires_at ? t("sub.app.validUntil") : t("sub.app.noEnd")}</span>
         </div>
-        {selling ? (
+        {shop?.offers.length ? (
           <Button variant="primary" className="topup-btn" onClick={() => push({ name: "shop", kind: "renew" })}>
             {t("sub.shop")}
           </Button>
-        ) : support && ended ? (
-          <a className="btn btn-primary topup-btn" href={support} target="_blank" rel="noreferrer noopener" {...outside(support)}>
+        ) : support ? (
+          <Button variant="primary" className="topup-btn" onClick={() => openOutside(support)}>
             {t("sub.renew")}
-          </a>
+          </Button>
         ) : null}
       </div>
-      <p className="state-line">
-        {t(`sub.status.${info.state}`, { name: firstName })}
-        {info.expires_at ? ` · ${dateLong(info.expires_at)}` : ""}
+      {ended ? <div className="warn">{t(`sub.status.${info.state}`, { name: firstName })}</div> : null}
+      {info.pools?.map((pool) =>
+        pool.limit != null && pool.used >= pool.limit && !pool.extra ? (
+          <div key={pool.name} className="warn">
+            {pool.name}: {t("sub.poolOut")}
+          </div>
+        ) : null,
+      )}
+    </Card>
+  );
+}
+
+function Announce({ info }: { info: Info }) {
+  if (!info.announce) return null;
+  const href = safeHref(info.announce_url, { tg: true });
+  return (
+    <Card className="card-pad">
+      <p className="muted-text" style={{ margin: 0 }}>
+        {info.announce}
       </p>
-      <div className="traffic">
-        <div className="traffic-head">
-          <span>{t("sub.app.traffic")}</span>
-          <b>{info.limit != null ? `${bytes(used)} ${ofTotal(info.limit, extra)}` : `${bytes(used)} · ${t("sub.unlimited")}`}</b>
-        </div>
-        {info.limit != null ? (
-          <div className={`bar ${leftBytes === 0 ? "full" : ""}`}>
-            <i style={{ width: `${cap ? Math.min(100, (used / cap) * 100) : 0}%` }} />
-          </div>
-        ) : null}
-        {info.resets_at ? <small>{t("sub.app.resets", { date: dateShort(info.resets_at) })}</small> : null}
-      </div>
-      {info.pools?.map((pool) => (
-        <div key={pool.name} className="traffic">
-          <div className="traffic-head">
-            <span>{pool.name}</span>
-            <b>{pool.limit != null ? `${bytes(pool.used)} ${ofTotal(pool.limit, pool.extra ?? 0)}` : `${bytes(pool.used)} · ${t("sub.poolUnlimited")}`}</b>
-          </div>
-          {pool.limit != null ? (
-            <div className={`bar ${pool.used >= pool.limit && !pool.extra ? "full" : ""}`}>
-              <i style={{ width: `${Math.min(100, (pool.used / (Math.max(pool.limit, pool.used) + (pool.extra ?? 0) || 1)) * 100)}%` }} />
-            </div>
-          ) : null}
-          {pool.limit != null && pool.used >= pool.limit && !pool.extra ? <small>{t("sub.poolOut")}</small> : null}
-        </div>
-      ))}
-      {info.device_limit || info.speed_limit ? (
-        <div className="facts">
-          {info.device_limit ? <span className="fact">{t(info.device_mode === "online" ? "sub.upToOnline" : "sub.upTo", { n: info.device_limit })}</span> : null}
-          {info.speed_limit ? <span className="fact">{t("sub.speedUpTo", { n: info.speed_limit })}</span> : null}
-        </div>
+      {href ? (
+        <Button className="mt" onClick={() => openOutside(href)}>
+          {t("sub.announceMore")}
+        </Button>
       ) : null}
     </Card>
   );
 }
 
-function DevicesCard() {
+function DevicesCard({ onOpen }: { onOpen: (d: Device) => void }) {
   const info = useInfo();
-  const { push } = useStore();
-  const [open, setOpen] = useState<number | null>(null);
+  const { push, toast } = useStore();
   const list = info.devices ?? [];
   const online = info.device_mode === "online";
   const full = !online && info.device_limit > 0 && list.length >= info.device_limit;
@@ -201,60 +268,71 @@ function DevicesCard() {
   ]
     .filter(Boolean)
     .join(" ");
-  const shown = list.find((d) => d.id === open);
+  const hint =
+    info.device_limit > 0
+      ? online
+        ? t("sub.devicesOnline", { limit: info.device_limit })
+        : t("sub.devicesCount", { n: list.length, limit: info.device_limit })
+      : t("sub.app.howItWorks");
   return (
-    <Card className="devices-card" label={t("sub.app.devices")}>
+    <Card className="devices-card">
       <div className="devices-head">
         <div>
-          <h2 className="h-display">{t("sub.app.devices")}</h2>
-          {info.device_limit > 0 ? (
-            <span className="hint">{online ? t("sub.devicesOnline", { limit: info.device_limit }) : t("sub.devicesCount", { n: list.length, limit: info.device_limit })}</span>
-          ) : null}
+          <h2 className="h-display">
+            {t("sub.app.devices")} <em>{list.length}</em>
+          </h2>
+          <button type="button" className="hint" onClick={() => toast(note)}>
+            {hint} <IconHelp size={16} />
+          </button>
         </div>
-        <button type="button" className="fab" aria-label={t("sub.app.addDevice")} onClick={() => push({ name: "wizard" })}>
-          <Plus size={40} aria-hidden />
+        <button type="button" className="fab" onClick={() => push({ name: "wizard" })} aria-label={t("sub.app.addDevice")}>
+          <IconPlus size={34} strokeWidth={2.4} />
         </button>
       </div>
-      {full ? <p className="warn soft" style={{ margin: "16px 36px 0" }}>{t("sub.devicesFull")}</p> : null}
-      {wait && list.length ? (
-        <p className="warn soft" style={{ margin: "16px 36px 0" }} role="status">
-          <Hourglass size={16} aria-hidden style={{ display: "inline", verticalAlign: -3, marginRight: 6 }} />
-          {t("sub.unbindLimitTitle")} {t("sub.unbindAfter", { date: dateShort(wait), time: time(wait) })}
-        </p>
-      ) : null}
-      {list.length === 0 ? (
-        <p className="empty-devices">{t("sub.devicesEmpty")}</p>
-      ) : (
-        <div style={{ marginTop: 12 }}>
-          {list.map((d) => {
-            const meta = deviceDetails(d, !d.shared);
-            return (
-              <button key={d.id} type="button" className="device-row" onClick={() => setOpen(d.id)}>
-                <span className="device-icon" aria-hidden>
-                  {d.shared ? <Layers size={30} /> : desktopOS.test(d.os) ? <Laptop size={30} /> : <Smartphone size={30} />}
-                </span>
-                <span className="device-text">
-                  <b>{deviceName(d)}</b>
-                  <small>
-                    {meta ? `${meta} · ` : ""}
-                    {d.used ? `${bytes(d.used)} · ` : ""}
-                    {ago(d.last_seen)}
-                  </small>
-                </span>
-                <Pencil size={20} className="muted" aria-hidden />
-              </button>
-            );
-          })}
+      {full ? (
+        <div className="warn" style={{ margin: "16px 36px 0" }}>
+          {t("sub.devicesFull")}
         </div>
-      )}
-      <p className="devices-note">{note}</p>
-      {shown ? <DeviceSheet key={shown.id} d={shown} canUnbind={!off && !wait} returnHours={returnHours} onClose={() => setOpen(null)} /> : null}
+      ) : null}
+      {wait && list.length ? (
+        <div className="warn" style={{ margin: "16px 36px 0" }} role="status">
+          {t("sub.unbindLimitTitle")}. {t("sub.unbindAfter", { date: dateShort(wait), time: time(wait) })}
+        </div>
+      ) : null}
+      {list.length === 0 ? <div className="empty-devices">{t("sub.app.devicesEmpty")}</div> : null}
+      {list.map((d) => {
+        const meta = deviceDetails(d, !d.shared);
+        const platform = platformOf(d.os);
+        return (
+          <button
+            key={d.id}
+            type="button"
+            className="device-row"
+            onClick={() => {
+              haptic();
+              onOpen(d);
+            }}
+          >
+            <span className="device-icon">{d.shared ? <IconLayers size={30} /> : platform ? <PlatformIcon platform={platform} /> : <IconDevices size={30} />}</span>
+            <span className="device-text">
+              <b>{deviceName(d)}</b>
+              <small>
+                {meta ? `${meta} · ` : ""}
+                {d.used ? `${bytes(d.used)} · ` : ""}
+                {ago(d.last_seen)}
+              </small>
+            </span>
+            <IconSliders className="muted" size={28} />
+          </button>
+        );
+      })}
     </Card>
   );
 }
 
 /** One device: its own name, and the unbinding that frees its place. */
-function DeviceSheet({ d, canUnbind, returnHours, onClose }: { d: Device; canUnbind: boolean; returnHours: number; onClose: () => void }) {
+function DeviceSheet({ d, onClose }: { d: Device; onClose: () => void }) {
+  const info = useInfo();
   const { subURL, reload, toast } = useStore();
   const id = useId();
   const [name, setName] = useState(d.name);
@@ -263,16 +341,23 @@ function DeviceSheet({ d, canUnbind, returnHours, onClose }: { d: Device; canUnb
   const [confirm, setConfirm] = useState(false);
   const clean = name.trim();
   const label = deviceName(d);
+  const wait = !!info.unbind_after && new Date(info.unbind_after).getTime() > Date.now();
+  const canUnbind = !info.unbind_off && !wait;
+  const returnHours = info.return_hours ?? 0;
 
-  const save = async (e: FormEvent) => {
-    e.preventDefault();
-    if (busy || clean === d.name) return;
+  const save = async () => {
+    if (busy) return;
+    if (clean === d.name) {
+      onClose();
+      return;
+    }
     setBusy("save");
     setError("");
     try {
       const r = await postJSON<{ code: string }>(`${subURL}/devices/${d.id}/name`, { name: clean });
       if (r.ok) {
         await reload();
+        toast(t("sub.app.saved"));
         onClose();
         return;
       }
@@ -300,7 +385,7 @@ function DeviceSheet({ d, canUnbind, returnHours, onClose }: { d: Device; canUnb
         return;
       }
       await reload();
-      toast(t("common.delete") + ": " + label);
+      toast(t("sub.app.unbound"));
       onClose();
     } catch {
       setError(t("sub.unbindFailed"));
@@ -311,54 +396,54 @@ function DeviceSheet({ d, canUnbind, returnHours, onClose }: { d: Device; canUnb
 
   return (
     <Sheet onClose={onClose} label={label}>
-      <h2 className="sheet-title">{label}</h2>
-      <form onSubmit={(e) => void save(e)} noValidate>
-        <label htmlFor={id} className="label">
-          {t("sub.renameField")}
-        </label>
-        <input
-          id={id}
-          className="input"
-          value={name}
-          maxLength={DEVICE_NAME_MAX}
-          placeholder={(d.shared ? t("sub.sharedPlace") : reportedName(d)) || t("sub.device")}
-          autoComplete="off"
-          aria-invalid={!!error}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <p className="muted-text" style={{ fontSize: 14 }}>
-          {t("sub.renameHint")}
-        </p>
-        <div className="stack">
-          <Button variant="primary" type="submit" loading={busy === "save"} disabled={!!busy || clean === d.name}>
-            {t("common.save")}
-          </Button>
-        </div>
-      </form>
-      {canUnbind ? (
-        confirm ? (
-          <div className="stack" role="group" aria-label={t("sub.unbindLabel", { name: label })}>
-            <p className="warn" style={{ marginTop: 0 }}>
-              {t("sub.unbindWarn")}
-              {returnHours !== 0 && !d.shared ? " " + (returnHours < 0 ? t("sub.unbindWarnNever") : t("sub.unbindWarnReturn", { pause: pause(returnHours) })) : ""}
-            </p>
-            <div className="row-half" style={{ marginTop: 0 }}>
-              <Button variant="glass" disabled={!!busy} onClick={() => setConfirm(false)}>
-                {t("common.cancel")}
-              </Button>
-              <Button variant="glass" className="danger-btn" loading={busy === "unbind"} onClick={() => void unbind()}>
-                {t("sub.unbindYes")}
-              </Button>
-            </div>
+      <h3 className="sheet-title">{t("sub.app.deviceSettings")}</h3>
+      {wait && info.unbind_after ? <div className="warn">{t("sub.unbindAfter", { date: dateShort(info.unbind_after), time: time(info.unbind_after) })}</div> : null}
+
+      <label htmlFor={id} className="label">
+        {t("sub.app.deviceName")}
+      </label>
+      <input
+        id={id}
+        className="input"
+        value={name}
+        maxLength={DEVICE_NAME_MAX}
+        placeholder={(d.shared ? t("sub.sharedPlace") : reportedName(d)) || t("sub.device")}
+        autoComplete="off"
+        aria-invalid={!!error}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && void save()}
+      />
+
+      {confirm ? (
+        <>
+          <div className="warn">
+            {t("sub.unbindWarn")}
+            {returnHours !== 0 && !d.shared ? " " + (returnHours < 0 ? t("sub.unbindWarnNever") : t("sub.unbindWarnReturn", { pause: pause(returnHours) })) : ""}
           </div>
-        ) : (
-          <div className="stack">
-            <Button variant="ghost" className="danger-btn" disabled={!!busy} onClick={() => setConfirm(true)}>
-              {t("sub.unbind")}
+          <div className="row-half">
+            <Button disabled={!!busy} onClick={() => setConfirm(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button className="danger-btn" loading={busy === "unbind"} onClick={() => void unbind()}>
+              {t("sub.unbindYes")}
             </Button>
           </div>
-        )
-      ) : null}
+        </>
+      ) : canUnbind ? (
+        <div className="row-2 mt">
+          <Button loading={busy === "save"} onClick={() => void save()}>
+            {t("common.save")}
+          </Button>
+          <Button className="danger-btn square" disabled={!!busy} onClick={() => setConfirm(true)} aria-label={t("sub.unbindLabel", { name: label })}>
+            <IconTrash />
+          </Button>
+        </div>
+      ) : (
+        <Button className="mt" loading={busy === "save"} onClick={() => void save()}>
+          {t("common.save")}
+        </Button>
+      )}
+
       {error ? (
         <p className="error-text" role="alert">
           {error}
@@ -369,20 +454,59 @@ function DeviceSheet({ d, canUnbind, returnHours, onClose }: { d: Device; canUnb
 }
 
 function PromoCard() {
-  const { push, promoCode } = useStore();
+  const { push, promoCode, toast } = useStore();
+  const [editing, setEditing] = useState(false);
+  const [code, setCode] = useState("");
+  const input = useRef<HTMLInputElement>(null);
+  const promo = usePromo(() => {
+    setEditing(false);
+    setCode("");
+  });
+
+  const activate = async () => {
+    if (!code.trim()) {
+      input.current?.focus();
+      return;
+    }
+    const why = await promo.apply(code);
+    if (why) {
+      tgEvent("web_app_trigger_haptic_feedback", { type: "notification", notification_type: "error" });
+      toast(why, "err");
+    }
+  };
+
   return (
-    <Card className="art-card">
+    <Card className="promo-card art-card">
       <RubleTags className="art art-right" />
-      <h2 className="h-display">
-        {t("sub.app.promoAsk")}
-        <br />
-        <em>{t("sub.app.promoWord")}</em>
-      </h2>
-      {promoCode ? <p className="ok-text" style={{ position: "relative" }}>{t("sub.promoSelected", { code: promoCode })}</p> : null}
+      {editing ? (
+        <input
+          ref={input}
+          className="promo-input h-display"
+          placeholder={t("sub.promoCode")}
+          value={code}
+          autoFocus
+          autoComplete="off"
+          spellCheck={false}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          onKeyDown={(e) => e.key === "Enter" && void activate()}
+          onBlur={() => !code && setEditing(false)}
+        />
+      ) : (
+        <h2 className="h-display">{promoCode || t("sub.promoCode")}</h2>
+      )}
       <div className="art-actions">
-        <Button variant="primary" onClick={() => push({ name: "promo" })}>
-          {t("sub.app.promoOpen")}
-        </Button>
+        {editing ? (
+          <Button variant="primary" loading={promo.busy} onMouseDown={(e) => e.preventDefault()} onClick={() => void activate()}>
+            {t("sub.app.activate")}
+          </Button>
+        ) : (
+          <>
+            <Button onClick={() => setEditing(true)}>{t("sub.app.promoOpen")}</Button>
+            <Button className="square" aria-label={t("sub.promoTitle")} onClick={() => push({ name: "promo" })}>
+              <IconTicket size={26} style={{ color: "#fff" }} />
+            </Button>
+          </>
+        )}
       </div>
     </Card>
   );
@@ -394,26 +518,15 @@ function HelpCard() {
   const support = safeHref(info?.support_url, { tg: true });
   if (!support && !docs) return null;
   return (
-    <Card className="art-card mirror">
+    <Card className="invite-card art-card">
       <PaperPlane className="art art-left" />
-      <h2 className="h-display">
-        {t("sub.app.helpTop")}
-        <br />
-        <em>{t("sub.app.helpBottom")}</em>
-      </h2>
-      <p className="muted-text" style={{ position: "relative", marginLeft: "auto", maxWidth: "70%" }}>
-        {t("sub.app.supportText")}
-      </p>
+      <h2 className="h-display">{t("sub.app.helpTop")}</h2>
       <div className="art-actions">
-        {docs ? (
-          <Button variant="glass" onClick={() => push({ name: "docs" })} aria-label={t("sub.docs")}>
-            <BookOpen size={26} aria-hidden />
+        {support ? <Button onClick={() => openOutside(support)}>{t("sub.app.write")}</Button> : <Button onClick={() => push({ name: "docs" })}>{t("sub.docs")}</Button>}
+        {support && docs ? (
+          <Button className="square" aria-label={t("sub.docs")} onClick={() => push({ name: "docs" })}>
+            <IconInfo />
           </Button>
-        ) : null}
-        {support ? (
-          <a className="btn btn-primary" href={support} target="_blank" rel="noreferrer noopener" {...outside(support)}>
-            {t("sub.support")}
-          </a>
         ) : null}
       </div>
     </Card>
@@ -421,31 +534,49 @@ function HelpCard() {
 }
 
 /** What else is on sale: traffic and a device for the subscription, a new one, the trial. */
-function Extras({ forNew }: { forNew: boolean }) {
+function Extras({ forNew, skipTrial }: { forNew: boolean; skipTrial?: boolean }) {
   const { shop, packages, push } = useStore();
   const rows: { kind: ShopKind; title: string; text: string }[] = [];
   if (!forNew && packages?.packages?.length) rows.push({ kind: "packages", title: t("sub.packages"), text: t("sub.packagesPick") });
   if (!forNew && packages?.device) rows.push({ kind: "device", title: t("sub.device"), text: packages.device.description || t("sub.devicePick") });
-  if (shop?.trial) rows.push({ kind: "trial", title: t("sub.trialTitle"), text: shop.trial.description || t("sub.trialPick") });
-  if (shop?.allow_new && shop.offers.length) rows.push({ kind: forNew ? "new" : "new", title: t(forNew ? "sub.shop" : "sub.shopNew"), text: t("sub.shopPick") });
+  if (shop?.trial && !skipTrial) rows.push({ kind: "trial", title: t("sub.trialTitle"), text: shop.trial.description || t("sub.trialPick") });
+  if (shop?.allow_new && shop.offers.length) rows.push({ kind: "new", title: t(forNew ? "sub.shop" : "sub.shopNew"), text: t("sub.shopPick") });
   if (!rows.length) return null;
   return (
     <Card className="list-card">
       {rows.map((r) => (
-        <button key={r.kind + r.title} type="button" className="list-row" onClick={() => push({ name: "shop", kind: r.kind })}>
-          <span className="row-main">
+        <button key={r.kind} type="button" className="list-row" onClick={() => push({ name: "shop", kind: r.kind })}>
+          <span className="app-text">
             <b>{r.title}</b>
             <small>{r.text}</small>
           </span>
-          <span className="row-price">›</span>
+          <IconArrowRight className="muted" size={24} />
         </button>
       ))}
     </Card>
   );
 }
 
+export function Home() {
+  const info = useInfo();
+  const [device, setDevice] = useState<Device | null>(null);
+  const shown = device ? (info.devices ?? []).find((d) => d.id === device.id) : undefined;
+  return (
+    <div className="screen home">
+      <UserHeader />
+      <BalanceCard />
+      <Announce info={info} />
+      <DevicesCard onOpen={setDevice} />
+      <Extras forNew={false} />
+      <PromoCard />
+      <HelpCard />
+      {shown ? <DeviceSheet key={shown.id} d={shown} onClose={() => setDevice(null)} /> : null}
+    </div>
+  );
+}
+
 /** The free plan: one tap gives the subscription. */
-function FreeCard({ offer }: { offer: NonNullable<ShopData["free"]> }) {
+function FreeOffer({ offer }: { offer: NonNullable<ShopData["free"]> }) {
   const { session, refresh } = useStore();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -468,95 +599,99 @@ function FreeCard({ offer }: { offer: NonNullable<ShopData["free"]> }) {
     }
   };
   return (
-    <Card className="offer" label={t("sub.freeTitle")}>
+    <Card className="offer">
       <div className="offer-head">
         <h2>{offer.name}</h2>
-        <span className="gift" aria-hidden>
+        <div className="gift" aria-hidden>
           🎁
-        </span>
-      </div>
-      <div className="offer-body">{offer.description || t("sub.freeAgain")}</div>
-      <div className="offer-foot stack" style={{ marginTop: 0 }}>
-        <Button variant="primary" loading={busy} onClick={() => void take()}>
-          {t("sub.freeTake")}
-        </Button>
-        {offer.channel ? (
-          <Button variant="glass" onClick={() => openOutside(offer.channel!)}>
-            {t("sub.freeJoin")}
-          </Button>
-        ) : null}
-        {error ? (
-          <p className="error-text" role="alert">
-            {error}
-          </p>
-        ) : null}
-      </div>
-    </Card>
-  );
-}
-
-function Announce({ info }: { info: Info }) {
-  if (!info.announce) return null;
-  const href = safeHref(info.announce_url, { tg: true });
-  return (
-    <Card className="card-pad" label={t("sub.announceMore")}>
-      <p className="note">{info.announce}</p>
-      {href ? (
-        <div className="stack">
-          <a className="btn btn-glass" href={href} target="_blank" rel="noreferrer noopener" {...outside(href)}>
-            {t("sub.announceMore")}
-          </a>
         </div>
+      </div>
+      <dl className="rows">
+        <div>
+          <dt>{offer.description || t("sub.freeAgain")}</dt>
+        </div>
+      </dl>
+      {error ? (
+        <p className="error-text" role="alert">
+          {error}
+        </p>
+      ) : null}
+      <Button variant="primary" loading={busy} onClick={() => void take()}>
+        {t("sub.freeTake")}
+      </Button>
+      {offer.channel ? (
+        <Button className="mt" onClick={() => openOutside(offer.channel!)}>
+          {t("sub.freeJoin")}
+        </Button>
       ) : null}
     </Card>
   );
 }
 
-export function Home() {
-  const info = useInfo();
-  const { page } = useStore();
+/** The trial on sale, laid out like a gift. */
+function TrialOffer({ offer }: { offer: Offer }) {
+  const { push } = useStore();
   return (
-    <main className="screen home">
-      <UserHeader />
-      <SubsSwitch />
-      <StatusCard />
-      <Announce info={info} />
-      <DevicesCard />
-      <Extras forNew={false} />
-      <PromoCard />
-      <HelpCard />
-      <Footnote>{page.brand || info.brand}</Footnote>
-    </main>
+    <Card className="offer">
+      <div className="offer-head">
+        <h2>{offer.name}</h2>
+        <div className="gift" aria-hidden>
+          🎁
+        </div>
+      </div>
+      <dl className="rows">
+        {offer.groups?.map((g) => (
+          <div key={g.name}>
+            <dt>{groupText(g)}</dt>
+            <dd>{g.name}</dd>
+          </div>
+        ))}
+        {offer.description ? (
+          <div>
+            <dt>{offer.description}</dt>
+          </div>
+        ) : null}
+        <div>
+          <dt>{listPrice(offer)}</dt>
+          <dd>{t("sub.app.price")}</dd>
+        </div>
+      </dl>
+      <Button variant="primary" onClick={() => push({ name: "shop", kind: "trial" })}>
+        {t("sub.app.try")}
+      </Button>
+    </Card>
   );
 }
 
 /** An account without a subscription: the free plan, the trial, the plans on sale. */
 export function NoSub() {
-  const { shop, info, page } = useStore();
+  const { shop, info } = useStore();
   const support = safeHref(info?.support_url, { tg: true });
   const selling = !!(shop?.free || shop?.trial || (shop?.allow_new && shop.offers.length));
+  const top = shop?.free ? "sub.app.freeTop" : shop?.trial ? "sub.app.trialTop" : "sub.app.noSubTop";
+  const bottom = shop?.free ? "sub.app.freeBottom" : shop?.trial ? "sub.app.trialBottom" : "sub.app.noSubBottom";
   return (
-    <main className="screen home">
-      <UserHeader />
-      <Title top={t("sub.app.noSubTop")} bottom={t("sub.app.noSubBottom")} />
+    <div className="screen">
+      <UserHeader showBanner={false} />
+      <Title top={t(top)} bottom={t(bottom)} />
+      {shop?.free ? <FreeOffer offer={shop.free} /> : shop?.trial ? <TrialOffer offer={shop.trial} /> : null}
       {selling ? null : (
         <Card className="card-pad">
-          <h2 className="h-display sm">{t("sub.tgNoSubTitle")}</h2>
-          <p className="muted-text">{t("sub.tgNoSubText")}</p>
+          <p className="muted-text" style={{ margin: 0 }}>
+            {t("sub.tgNoSubText")}
+          </p>
           {support ? (
-            <div className="stack">
-              <a className="btn btn-primary" href={support} target="_blank" rel="noreferrer noopener" {...outside(support)}>
-                {t("sub.support")}
-              </a>
-            </div>
+            <Button variant="primary" className="mt" onClick={() => openOutside(support)}>
+              <IconHeadphones />
+              {t("sub.support")}
+            </Button>
           ) : null}
         </Card>
       )}
-      {shop?.free ? <FreeCard offer={shop.free} /> : null}
-      <Extras forNew />
+      <Extras forNew skipTrial={!shop?.free && !!shop?.trial} />
       <PromoCard />
       <HelpCard />
-      <Footnote>{page.brand}</Footnote>
-    </main>
+      {shop?.trial && !shop.free ? <Footnote>{t("sub.trialPick")}</Footnote> : null}
+    </div>
   );
 }

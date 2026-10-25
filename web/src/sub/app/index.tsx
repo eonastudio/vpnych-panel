@@ -1,6 +1,6 @@
 // The Telegram Mini App: the subscriber's subscriptions, the shop and the setup, in ВПНыч's
 // glass look. The same data and requests as the browser's page (browser.tsx); its own screens.
-import "../../styles/fonts.css";
+import "../../styles/fonts-inter.css";
 import "./app.css";
 import { StrictMode, useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -12,11 +12,11 @@ import { readPage } from "../page";
 import { loadShop, type ShopData } from "../shop";
 import type { Info, TgSub } from "../types";
 import { Clouds } from "./art";
-import { Home, NoSub } from "./home";
+import { Home, NoSub, tgFullName, tgUser } from "./home";
 import { Docs, Doc, Promo, Reissue, Wizard } from "./screens";
 import { Checkout } from "./shop";
 import { StoreContext, type Screen, type Store, type Toast } from "./store";
-import { Button } from "./ui";
+import { Avatar, Button } from "./ui";
 
 /** Pauses between the reloads after a payment: the panel applies a paid one within seconds. */
 const AFTER_PAYMENT_MS = [2_000, 5_000, 10_000];
@@ -200,12 +200,11 @@ function MiniApp() {
 
   const screen = stack[stack.length - 1]!;
   let body;
-  if (tg.state === "loading" || (tg.state === "ok" && !current && failedURL !== subURL)) body = <Splash text={t("sub.tgLoading")} />;
-  else if (tg.state === "failed") body = <Splash text={t("sub.loadFailed")} error={t("sub.tgFailed")} onRetry={() => void session()} />;
+  if (tg.state === "loading" || (tg.state === "ok" && !current && failedURL !== subURL)) body = <Splash />;
+  else if (tg.state === "failed") body = <Splash error={t("sub.tgFailed")} onRetry={() => void session()} />;
   else if (tg.state === "ok" && !current)
     body = (
       <Splash
-        text={t("sub.loadFailed")}
         error={t("sub.loadFailedText")}
         onRetry={() => {
           setFailedURL(null);
@@ -238,12 +237,28 @@ function MiniApp() {
   );
 }
 
-function Splash({ text, error, onRetry }: { text: string; error?: string; onRetry?: () => void }) {
+/** The greeting for the hour of the day. */
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return t("sub.app.greetMorning");
+  if (h >= 12 && h < 18) return t("sub.app.greetDay");
+  if (h >= 18 && h < 23) return t("sub.app.greetEvening");
+  return t("sub.app.greetNight");
+}
+
+function Splash({ error, onRetry }: { error?: string; onRetry?: () => void }) {
+  const greet = greeting().replace(/,\s*$/, "");
   return (
     <div className="splash">
       <Clouds />
       <div className="splash-content" role={error ? "alert" : "status"}>
-        <h1>{text}</h1>
+        <Avatar url={tgUser.photo_url} name={tgFullName || "V"} size={76} />
+        <h1>
+          {greet}
+          {tgFullName ? "," : ""}
+          <br />
+          {tgFullName || t("sub.app.guest")}
+        </h1>
         {error ? (
           <div className="splash-error">
             {error}
