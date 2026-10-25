@@ -3,6 +3,12 @@
 Each release has a section in English and in Russian; the release workflow puts them in
 the signed manifest, and the panel shows the one in its language.
 
+## 0.5.2.2-rc.3
+### en
+- **The new Mini App comes with its styles**: in 0.5.2.2-rc.2 the build left them out, and the Mini App opened unstyled.
+### ru
+- **Новый Mini App снова со стилями**: в 0.5.2.2-rc.2 сборка их теряла, и Mini App открывался без оформления.
+
 ## 0.5.2.2-rc.2
 ### en
 - **A new Mini App in the ВПНыч look**: the subscription's status, devices, extras, promo codes and help on one screen; a checkout with the plan, its term and the ways to pay (Telegram Stars, the payment addons, or by hand through support); a setup wizard in three steps, the documents and the reissue of the link. Everything works as before; the subscription page in a browser is unchanged.
