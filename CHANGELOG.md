@@ -3,6 +3,12 @@
 Each release has a section in English and in Russian; the release workflow puts them in
 the signed manifest, and the panel shows the one in its language.
 
+## 0.5.2.2-rc.2
+### en
+- **A new Mini App in the ВПНыч look**: the subscription's status, devices, extras, promo codes and help on one screen; a checkout with the plan, its term and the ways to pay (Telegram Stars, the payment addons, or by hand through support); a setup wizard in three steps, the documents and the reissue of the link. Everything works as before; the subscription page in a browser is unchanged.
+### ru
+- **Новый Mini App в стиле ВПНыча**: статус подписки, устройства, докупки, промокоды и помощь на одном экране; оформление с тарифом, сроком и способами оплаты (Telegram Stars, аддоны оплаты или вручную через поддержку); мастер подключения в три шага, документы и перевыпуск ссылки. Всё работает как раньше; страница подписки в браузере не изменилась.
+
 ## 0.5.2.1
 ### en
 - **ВПНыч**: the panel's own name, logo and teal look, in the admin panel and on the subscription page.
