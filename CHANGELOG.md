@@ -3,6 +3,12 @@
 Each release has a section in English and in Russian; the release workflow puts them in
 the signed manifest, and the panel shows the one in its language.
 
+## 0.5.2.2-rc.5
+### en
+- **The Mini App redrawn after the ВПНыч concept**: the home screen, the checkout, the setup wizard, help, promo codes, the new link and the greeting screen have the concept's layout and look one to one. Payments and everything else work as before; the subscription page in a browser is unchanged.
+### ru
+- **Mini App перерисован по концепту ВПНыча**: главный экран, оформление, мастер подключения, помощь, промокоды, новая ссылка и экран приветствия один в один повторяют вёрстку и стиль концепта. Оплата и всё остальное работают как раньше; страница подписки в браузере не изменилась.
+
 ## 0.5.2.2-rc.3
 ### en
 - **The new Mini App comes with its styles**: in 0.5.2.2-rc.2 the build left them out, and the Mini App opened unstyled.
