@@ -3,6 +3,14 @@
 Each release has a section in English and in Russian; the release workflow puts them in
 the signed manifest, and the panel shows the one in its language.
 
+## 0.5.2.1
+### en
+- **ВПНыч**: the panel's own name, logo and teal look, in the admin panel and on the subscription page.
+- **Updates come from ВПНыч** (eonastudio/vpnych-panel), signed with its own release keys; a server moves to them once by installing ВПНыч's install.sh.
+### ru
+- **ВПНыч**: своё название, логотип и бирюзовый стиль в админке и на странице подписки.
+- **Обновления приходят из ВПНыч** (eonastudio/vpnych-panel) и подписаны его собственными ключами; сервер переходит на них один раз, установкой install.sh ВПНыча.
+
 ## 0.5.2.0
 ### en
 - **API changes** (server groups and plans; for scripts and addons that call them): `POST /api/v1/tariffs/{id}/apply-pools` is gone, and `POST /api/v1/tariffs/{id}/apply` replaces it, with the flags `traffic`, `devices`, `speed` and `groups` (at least one; `groups` is what apply-pools did). The field `excluded` of `PoolSetting` (called `PoolLimit` before; the plan's `pools` and `PUT /api/v1/users/{id}/pools`) and of `UserPoolView` is gone: `mode` replaces it, one of `main`, `own`, `unlimited` and `closed`, and `traffic_limit` goes only with `own` (before: a limit, `null` for none, `excluded: true`; the update converts what exists). A plan's `pools` (`TariffView.pools`) now lists every group with its `mode`, not only the groups with a row of the plan, and a group that a plan's request leaves out is on the main traffic, where it used to be unlimited.
