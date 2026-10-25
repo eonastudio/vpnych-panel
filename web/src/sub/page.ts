@@ -14,7 +14,7 @@ export type DocItem = { id: number; title: string; emoji?: string; platform?: st
 export type DocView = DocItem & { body: string };
 
 /** The page's data block (subpage.Public). */
-type PagePublic = {
+export type PagePublic = {
   config: PageConfig;
   brand: string;
   /** The brand's colour when the page takes it; none keeps the palette's. */

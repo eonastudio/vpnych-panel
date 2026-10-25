@@ -11,9 +11,9 @@ import { okData, postJSON } from "./net";
 /** A term of a plan sold for several: its own price; label is "30 days", "3 months". */
 type Term = { days: number; label: string; description: string; stars?: number; rub?: number };
 /** A server group as a tariff on sale has it: in on the main traffic, with a limit of its own (bytes), without one, or not included. */
-type OfferGroup = { name: string; mode: "main" | "own" | "unlimited" | "closed"; limit?: number };
+export type OfferGroup = { name: string; mode: "main" | "own" | "unlimited" | "closed"; limit?: number };
 /** A plan, a package (pool: its group's name, none for the main traffic), the trial or a device; a plan says what it is made of in groups and gifts. */
-type Offer = { id: number; name: string; description: string; note?: string; stars?: number; rub?: number; terms?: Term[]; pool?: string; groups?: OfferGroup[]; gifts?: string[] };
+export type Offer = { id: number; name: string; description: string; note?: string; stars?: number; rub?: number; terms?: Term[]; pool?: string; groups?: OfferGroup[]; gifts?: string[] };
 export type ShopData = {
   allow_new: boolean;
   providers: { stars: boolean };
@@ -28,7 +28,7 @@ export type ShopData = {
   /** The free plan the account may take now; channel is the one it asks the account to join. */
   free?: { name: string; description: string; channel?: string };
 };
-type Provider = "stars" | `addon:${string}`;
+export type Provider = "stars" | `addon:${string}`;
 
 // YooKassa and CryptoBot keep the words buyers knew them by, and come first.
 const KNOWN: Record<string, Key> = { "addon:yookassa": "sub.shopCard", "addon:cryptobot": "sub.shopCrypto" };
@@ -81,81 +81,7 @@ export function Shop({
   onRefresh: () => void;
   promoCode?: string;
 }) {
-  const [picked, setPicked] = useState<number | null>(offers.length === 1 ? offers[0]!.id : null);
-  // The chosen term of a plan sold for several; the first until another is chosen.
-  const [termDays, setTermDays] = useState<number | null>(null);
-  const [busy, setBusy] = useState<Provider | null>(null);
-  const [error, setError] = useState("");
-  const [promoPreview, setPromoPreview] = useState<{ discount: number; final_amount: number; currency: string } | null>(null);
-  const [opened, setOpened] = useState(false);
-  // The payment page of a ruble provider, ready to open. Telegram opens a link only for a tap
-  // it sees, and the requests that made this link took that tap, so the buyer taps again.
-  const [ready, setReady] = useState<{ url: string; provider: Provider } | null>(null);
-  useEffect(() => { setError(""); setPromoPreview(null); setReady(null); }, [picked, termDays, promoCode]);
-  useEffect(() => setTermDays(null), [picked]);
-  const offer = offers.find((o) => o.id === picked);
-  const terms = offer?.terms && offer.terms.length > 1 ? offer.terms : null;
-  const term = terms ? (terms.find((x) => x.days === termDays) ?? terms[0]!) : null;
-  // What is paid for: the chosen term's prices, or the offer's own.
-  const price = term ?? offer;
-  // A single term the providers take now is named too: it may not be the plan's first,
-  // which a request without days is for.
-  const sold = term ?? offer?.terms?.[0];
-  const order = field === "trial" ? { trial: true } : field === "device" ? { device: true } : { [field]: offer?.id, ...(sold ? { term_days: sold.days } : {}) };
-  const failText = (code: string) =>
-    field === "package_id" && code === "not_for_sale" ? t("sub.packageNotForSale") : field === "device" && code === "not_for_sale" ? t("sub.deviceNotForSale") : t(FAIL[code] ?? "sub.shopFail");
-
-  const pay = async (provider: Provider) => {
-    if (!offer) return;
-    setBusy(provider);
-    setError("");
-    setReady(null);
-    try {
-      if (promoCode) {
-        const preview = await postJSON<{ code: string; discount: number; final_amount: number; currency: string }>(subRoot + "/tg/promo", {
-          init_data: initData,
-          token,
-          code: promoCode,
-          ...order,
-          provider,
-          validate_only: true,
-        });
-        const result = preview.data;
-        if (!preview.ok) {
-          setError(failText(result.code ?? "promo_unavailable"));
-          return;
-        }
-        if (result.discount != null && result.final_amount != null && result.currency) {
-          setPromoPreview({ discount: result.discount, final_amount: result.final_amount, currency: result.currency });
-        }
-      }
-      const r = await postJSON<{ url: string; code: string }>(subRoot + "/tg/pay", { init_data: initData, ...order, provider, token, promo_code: promoCode });
-      const body = r.data;
-      if (!r.ok || !body.url) {
-        setError(failText(body.code ?? ""));
-        return;
-      }
-      // A Stars link is https://t.me/$<slug>: Telegram opens its payment sheet for it.
-      const slug = /^https:\/\/t\.me\/\$(.+)$/.exec(body.url)?.[1];
-      if (provider === "stars" && slug) {
-        openInvoice(slug);
-        setOpened(true);
-      } else setReady({ url: body.url, provider });
-    } catch {
-      setError(t("sub.shopFail"));
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const methods: { id: Provider; label: string; price?: string }[] = [];
-  if (price?.stars && data.providers.stars) methods.push({ id: "stars", label: t("sub.shopStars"), price: `⭐ ${price.stars}` });
-  if (price?.rub) {
-    const adapters = [...(data.addons ?? [])].sort((a, b) => rank(a.provider) - rank(b.provider) || a.provider.localeCompare(b.provider));
-    for (const a of adapters) methods.push({ id: a.provider, label: KNOWN[a.provider] ? t(KNOWN[a.provider]!) : a.name, price: rubles(price.rub) });
-  }
-
-  const goName = ready ? data.addons?.find((a) => a.provider === ready.provider)?.name : undefined;
+  const { picked, setPicked, terms, term, setTermDays, offer, busy, error, promoPreview, opened, setOpened, ready, pay, methods, goName } = useCheckout({ data, offers, field, subRoot, initData, token, promoCode, openInvoice });
 
   return (
     <section className="glass sub-card p-4" aria-label={title}>
@@ -245,7 +171,109 @@ export function Shop({
   );
 }
 
-const FREE_FAIL: Record<string, Key> = {
+/**
+ * What a checkout knows and does, whatever it looks like: the offer and term picked, the ways
+ * to pay for them and the payment itself. The page's Shop and the Mini App's checkout share it.
+ */
+export function useCheckout({
+  data,
+  offers,
+  field,
+  subRoot,
+  initData,
+  token,
+  promoCode,
+  openInvoice,
+}: {
+  data: ShopData;
+  offers: Offer[];
+  field: "tariff_id" | "package_id" | "trial" | "device";
+  subRoot: string;
+  initData: string;
+  token: string;
+  promoCode: string;
+  openInvoice: (slug: string) => void;
+}) {
+  const [picked, setPicked] = useState<number | null>(offers.length === 1 ? offers[0]!.id : null);
+  // The chosen term of a plan sold for several; the first until another is chosen.
+  const [termDays, setTermDays] = useState<number | null>(null);
+  const [busy, setBusy] = useState<Provider | null>(null);
+  const [error, setError] = useState("");
+  const [promoPreview, setPromoPreview] = useState<{ discount: number; final_amount: number; currency: string } | null>(null);
+  const [opened, setOpened] = useState(false);
+  // The payment page of a ruble provider, ready to open. Telegram opens a link only for a tap
+  // it sees, and the requests that made this link took that tap, so the buyer taps again.
+  const [ready, setReady] = useState<{ url: string; provider: Provider } | null>(null);
+  useEffect(() => { setError(""); setPromoPreview(null); setReady(null); }, [picked, termDays, promoCode]);
+  useEffect(() => setTermDays(null), [picked]);
+  const offer = offers.find((o) => o.id === picked);
+  const terms = offer?.terms && offer.terms.length > 1 ? offer.terms : null;
+  const term = terms ? (terms.find((x) => x.days === termDays) ?? terms[0]!) : null;
+  // What is paid for: the chosen term's prices, or the offer's own.
+  const price = term ?? offer;
+  // A single term the providers take now is named too: it may not be the plan's first,
+  // which a request without days is for.
+  const sold = term ?? offer?.terms?.[0];
+  const order = field === "trial" ? { trial: true } : field === "device" ? { device: true } : { [field]: offer?.id, ...(sold ? { term_days: sold.days } : {}) };
+  const failText = (code: string) =>
+    field === "package_id" && code === "not_for_sale" ? t("sub.packageNotForSale") : field === "device" && code === "not_for_sale" ? t("sub.deviceNotForSale") : t(FAIL[code] ?? "sub.shopFail");
+
+  const pay = async (provider: Provider) => {
+    if (!offer) return;
+    setBusy(provider);
+    setError("");
+    setReady(null);
+    try {
+      if (promoCode) {
+        const preview = await postJSON<{ code: string; discount: number; final_amount: number; currency: string }>(subRoot + "/tg/promo", {
+          init_data: initData,
+          token,
+          code: promoCode,
+          ...order,
+          provider,
+          validate_only: true,
+        });
+        const result = preview.data;
+        if (!preview.ok) {
+          setError(failText(result.code ?? "promo_unavailable"));
+          return;
+        }
+        if (result.discount != null && result.final_amount != null && result.currency) {
+          setPromoPreview({ discount: result.discount, final_amount: result.final_amount, currency: result.currency });
+        }
+      }
+      const r = await postJSON<{ url: string; code: string }>(subRoot + "/tg/pay", { init_data: initData, ...order, provider, token, promo_code: promoCode });
+      const body = r.data;
+      if (!r.ok || !body.url) {
+        setError(failText(body.code ?? ""));
+        return;
+      }
+      // A Stars link is https://t.me/$<slug>: Telegram opens its payment sheet for it.
+      const slug = /^https:\/\/t\.me\/\$(.+)$/.exec(body.url)?.[1];
+      if (provider === "stars" && slug) {
+        openInvoice(slug);
+        setOpened(true);
+      } else setReady({ url: body.url, provider });
+    } catch {
+      setError(t("sub.shopFail"));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const methods: { id: Provider; label: string; price?: string }[] = [];
+  if (price?.stars && data.providers.stars) methods.push({ id: "stars", label: t("sub.shopStars"), price: `⭐ ${price.stars}` });
+  if (price?.rub) {
+    const adapters = [...(data.addons ?? [])].sort((a, b) => rank(a.provider) - rank(b.provider) || a.provider.localeCompare(b.provider));
+    for (const a of adapters) methods.push({ id: a.provider, label: KNOWN[a.provider] ? t(KNOWN[a.provider]!) : a.name, price: rubles(price.rub) });
+  }
+
+  const goName = ready ? data.addons?.find((a) => a.provider === ready.provider)?.name : undefined;
+
+  return { picked, setPicked, terms, term, setTermDays, offer, busy, error, promoPreview, opened, setOpened, ready, pay, methods, goName };
+}
+
+export const FREE_FAIL: Record<string, Key> = {
   free_active: "sub.freeActive",
   free_off: "sub.freeOff",
   too_many_subs: "sub.shopTooManySubs",
@@ -315,7 +343,7 @@ export function FreePlan({
 }
 
 /** How a plan has a group, in words: "included", "50 GB of its own", "unlimited", "not included". */
-function groupText(g: OfferGroup): string {
+export function groupText(g: OfferGroup): string {
   switch (g.mode) {
     case "own":
       return t("sub.groupOwn", { gb: bytes(g.limit ?? 0) });
@@ -330,7 +358,7 @@ function groupText(g: OfferGroup): string {
 
 /** The price a list shows: rubles when sold for them, else Stars; "from" the cheapest term
  * of a plan sold for several. */
-function listPrice(o: Offer): string {
+export function listPrice(o: Offer): string {
   const terms = o.terms && o.terms.length > 1 ? o.terms : [o];
   const rub = Math.min(...terms.map((x) => x.rub || Infinity));
   const price = Number.isFinite(rub) ? rubles(rub) : `⭐ ${Math.min(...terms.map((x) => x.stars || Infinity))}`;
