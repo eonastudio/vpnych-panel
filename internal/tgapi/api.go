@@ -195,6 +195,8 @@ type Message struct {
 	From      *User  `json:"from"`
 	Chat      Chat   `json:"chat"`
 	Text      string `json:"text"`
+	// Caption is the text under a photo or a file.
+	Caption string `json:"caption,omitempty"`
 	// SuccessfulPayment: a Stars invoice was paid (a service message from Telegram).
 	SuccessfulPayment *SuccessfulPayment `json:"successful_payment"`
 	// RefundedPayment: a Stars payment was refunded (a service message from Telegram).

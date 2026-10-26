@@ -62,6 +62,14 @@ var botRPC = map[string]rpcRule{
 	"Unbind":      rule("users:write", nil, []int{0}),
 	"Reissue":     rule("users:write", nil, []int{0}),
 	"TagCampaign": rule("users:write", []int{0}, nil),
+	// Support by tickets: the account's own tickets alone.
+	"TicketsOn":        rule("", nil, nil),
+	"Tickets":          rule("users:read", []int{0}, nil),
+	"TicketThread":     rule("users:read", []int{0}, nil),
+	"TicketCompose":    rule("users:read", []int{0}, nil),
+	"SetTicketCompose": rule("users:write", []int{0}, nil),
+	"PostTicket":       rule("users:write", []int{0}, nil),
+	"CloseTicket":      rule("users:write", []int{0}, nil),
 	// The shop: what is on offer, and what makes a payment or a subscription.
 	"Shop.Config": rule("", nil, nil), "Shop.Offers": rule("", nil, nil), "Shop.AddonName": rule("", nil, nil),
 	"Shop.TrialTariff":    rule("", nil, nil),

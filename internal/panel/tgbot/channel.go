@@ -18,7 +18,7 @@ import (
 // buying traffic for a subscription the account has. A payment already started is never
 // blocked, and nobody is kept from paying for what they hold.
 var ungated = map[string]bool{"pn": true, "py": true, "tp": true, "t": true, "r": true, "x": true, "xk": true, "xp": true, "e": true, "ep": true,
-	"bl": true, "bt": true, "ba": true, "bx": true}
+	"bl": true, "bt": true, "ba": true, "bx": true, "k": true, "kt": true, "kw": true}
 
 // passes: chat may see the menu. The gate is off, the account is in the channel, or the
 // channel cannot be asked: then nobody is locked out for the panel's trouble, the log

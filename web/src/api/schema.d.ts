@@ -2302,6 +2302,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Обращения в поддержку */
+        get: operations["list-tickets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Настройки обращений */
+        get: operations["get-ticket-settings"];
+        /** Включить или выключить обращения */
+        put: operations["update-ticket-settings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Переписка по обращению */
+        get: operations["get-ticket"];
+        put?: never;
+        post?: never;
+        /** Удалить обращение */
+        delete: operations["delete-ticket"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{id}/messages/{message_id}/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Картинка из обращения */
+        get: operations["get-ticket-photo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{id}/reply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ответить клиенту */
+        post: operations["reply-ticket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Закрыть или открыть обращение */
+        post: operations["set-ticket-status"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/topups": {
         parameters: {
             query?: never;
@@ -5602,6 +5706,10 @@ export interface components {
             /** @description Имя, как оно сохранено: без пробелов по краям */
             name: string;
         };
+        ReplyTicketInputBody: {
+            /** @description Ответ: придёт клиенту в бота */
+            text: string;
+        };
         Report: {
             /** Format: int64 */
             created: number;
@@ -6519,6 +6627,61 @@ export interface components {
             traffic_end: string;
             /** @description Для тех, у кого ещё нет подписки в боте */
             welcome: string;
+        };
+        TicketCountView: {
+            /** Format: int64 */
+            all: number;
+            /** Format: int64 */
+            unread: number;
+        };
+        TicketMessageView: {
+            body: string;
+            /** Format: date-time */
+            created_at: string;
+            from_admin: boolean;
+            /** Format: int64 */
+            id: number;
+            /** @description Есть картинка: GET /api/v1/tickets/{id}/messages/{message_id}/photo */
+            photo: boolean;
+        };
+        TicketSettingsView: {
+            /** @description Кнопка поддержки открывает обращения в боте и Mini App вместо ссылки */
+            enabled: boolean;
+        };
+        TicketStatusInputBody: {
+            /** @description true — закрыть, false — открыть снова */
+            closed: boolean;
+        };
+        TicketThreadOutputBody: {
+            messages: components["schemas"]["TicketMessageView"][];
+            ticket: components["schemas"]["TicketView"];
+        };
+        TicketView: {
+            /** Format: date-time */
+            created_at: string;
+            /** Format: int64 */
+            id: number;
+            /** @enum {string} */
+            source: "bot" | "miniapp";
+            /** @enum {string} */
+            status: "open" | "answered" | "closed";
+            subject: string;
+            /** Format: int64 */
+            tg_id: number;
+            tg_name?: string;
+            tg_username?: string;
+            /** @description Есть сообщения клиента, которых админ не читал */
+            unread: boolean;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        TicketsOutputBody: {
+            /** @description По статусам: open, answered, closed */
+            counts: {
+                [key: string]: components["schemas"]["TicketCountView"];
+            };
+            enabled: boolean;
+            items: components["schemas"]["TicketView"][];
         };
         TopUser: {
             /** Format: int64 */
@@ -12337,6 +12500,269 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TelegramPreviewOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "list-tickets": {
+        parameters: {
+            query?: {
+                status?: "open" | "answered" | "closed" | "";
+                /** @description Следующая страница: updated_at последнего показанного (unix) */
+                before_at?: number;
+                /** @description Следующая страница: id последнего показанного */
+                before_id?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-ticket-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketSettingsView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "update-ticket-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketSettingsView"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketSettingsView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketThreadOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "delete-ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-ticket-photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                message_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Картинка */
+            200: {
+                headers: {
+                    "Cache-Control"?: string;
+                    "Content-Type"?: string;
+                    "X-Content-Type-Options"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/*": unknown;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "reply-ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplyTicketInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketThreadOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "set-ticket-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketStatusInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketThreadOutputBody"];
                 };
             };
             /** @description Error */

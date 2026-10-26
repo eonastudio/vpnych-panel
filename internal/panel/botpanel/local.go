@@ -21,6 +21,7 @@ import (
 	"mikan/internal/panel/store/db"
 	"mikan/internal/panel/tgate"
 	"mikan/internal/panel/tgbot"
+	"mikan/internal/panel/tickets"
 )
 
 // Backend is tgbot.Backend and what only the panel's side of the bot reads: the notices about
@@ -57,6 +58,8 @@ type Local struct {
 	// MiniApp: the panel's certificate is one Telegram apps accept (not self-signed).
 	MiniApp func() bool
 	Now     func() time.Time
+	// Desk is support by tickets; nil: off.
+	Desk *tickets.Service
 }
 
 var _ Backend = (*Local)(nil)

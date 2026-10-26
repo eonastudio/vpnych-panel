@@ -16,6 +16,7 @@ import { Clouds } from "./art";
 import { Home, NoSub, tgFullName, tgUser } from "./home";
 import { Docs, Doc, Promo, Reissue, Wizard } from "./screens";
 import { Checkout } from "./shop";
+import { Support, TicketThread } from "./support";
 import { StoreContext, type Screen, type Store, type Toast } from "./store";
 import { Avatar, Button } from "./ui";
 
@@ -215,6 +216,8 @@ function MiniApp() {
     );
   else if (screen.name === "shop") body = <Checkout key={screen.kind + token} kind={screen.kind} />;
   else if (screen.name === "promo") body = <Promo />;
+  else if (screen.name === "support") body = <Support />;
+  else if (screen.name === "ticket") body = <TicketThread key={screen.id} id={screen.id} />;
   else if (screen.name === "docs") body = <Docs />;
   else if (screen.name === "doc") body = <Doc key={screen.id} id={screen.id} />;
   else if (!current) body = <NoSub />;

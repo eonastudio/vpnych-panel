@@ -32,6 +32,9 @@ const (
 	NodeUp   = "node.up"
 
 	BalanceTopup = "balance.topup"
+
+	TicketReply  = "ticket.reply"
+	TicketClosed = "ticket.closed"
 )
 
 // Payment is the data of PaymentPaid and PaymentRefunded: enough to thank, notify or count,
@@ -149,6 +152,14 @@ type Topup struct {
 	Reason   string `json:"reason,omitempty"` // rejected: the admin's words
 }
 
+// Ticket is the data of TicketReply and TicketClosed: the admin answered a support ticket of
+// the account (the envelope's tg_id), or closed it. Text is the answer as the admin wrote it.
+type Ticket struct {
+	TicketID int64  `json:"ticket_id"`
+	Subject  string `json:"subject"`
+	Text     string `json:"text,omitempty"`
+}
+
 // Doc describes one event type for the protocol's documentation: Data is an example of its
 // data as it goes on the wire.
 type Doc struct {
@@ -180,4 +191,6 @@ var Docs = []Doc{
 	{NodeDown, "A node stopped answering the panel's health checks.", Node{NodeID: 2, Name: "de-1", Code: "timeout", Since: 1_800_000_000}},
 	{NodeUp, "A node that was down answers again.", Node{NodeID: 2, Name: "de-1", DownAt: 1_800_000_000}},
 	{BalanceTopup, "The admin approved or rejected a top-up of an account's balance.", Topup{TopupID: 5, Status: "approved", Amount: 50000, Currency: "RUB", Balance: 65000}},
+	{TicketReply, "The admin answered a support ticket of the account.", Ticket{TicketID: 12, Subject: "No connection", Text: "Update the subscription, please."}},
+	{TicketClosed, "The admin closed a support ticket of the account.", Ticket{TicketID: 12, Subject: "No connection"}},
 }

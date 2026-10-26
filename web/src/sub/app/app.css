@@ -434,3 +434,11 @@ a.btn { text-decoration: none; }
 .buy-title { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; padding: 54px 0 34px; }
 .buy-title .h-display { font-size: 48px; }
 .buy-title small { color: var(--muted); font-size: 16px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; }
+
+/* Support by tickets: the conversation of one ticket. */
+.ticket-thread { display: flex; flex-direction: column; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.ticket-msg { margin-right: 48px; padding: 14px 18px; border-radius: 22px; background: color-mix(in srgb, var(--muted) 10%, transparent); }
+.ticket-msg.from-support { margin-right: 0; margin-left: 48px; background: color-mix(in srgb, var(--accent-2) 16%, transparent); }
+.ticket-msg .muted { font-size: 14px; margin-bottom: 4px; }
+.ticket-msg p { margin: 0; font-size: 17px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+textarea.input { resize: vertical; min-height: 120px; font: inherit; }

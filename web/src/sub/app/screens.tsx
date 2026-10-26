@@ -4,13 +4,13 @@ import { useEffect, useState, type FormEvent } from "react";
 import { getLocale, t } from "../../i18n";
 import { Markdown } from "../../lib/markdown";
 import { bytes, dateShort, days, money, period, time } from "../../lib/format";
-import { safeHref } from "../../lib/url";
 import { QR } from "../../components/ui";
 import { APPS, detect, enc, type Platform } from "../apps";
-import { initData, json, openOutside, outside, postJSON, request, subRoot, tokenOf } from "../net";
+import { initData, json, outside, postJSON, request, subRoot, tokenOf } from "../net";
 import { orderApps, PLATFORMS, type DocView } from "../page";
 import { IconChevronDown, IconCopy, IconExternal, IconHeadphones, IconHelp, IconLoader, IconRefresh, IconTicket } from "./icons";
 import { usePromo } from "./promo";
+import { useSupport } from "./support";
 import { useInfo, useStore } from "./store";
 import { Button, Card, Footnote, haptic, Radio, Title, TopBar } from "./ui";
 
@@ -173,8 +173,8 @@ export function Wizard() {
 
 /** The instructions as the help screen lists them: each one opens on its own screen. */
 export function Docs() {
-  const { page, push, info } = useStore();
-  const support = safeHref(info?.support_url, { tg: true });
+  const { page, push } = useStore();
+  const support = useSupport();
   return (
     <div className="screen">
       <TopBar label={t("sub.app.back")} />
@@ -207,7 +207,7 @@ export function Docs() {
         )}
         {support ? (
           <div className="card-pad">
-            <Button variant="primary" onClick={() => openOutside(support)}>
+            <Button variant="primary" onClick={support}>
               <IconHeadphones />
               {t("sub.app.writeSupport")}
             </Button>

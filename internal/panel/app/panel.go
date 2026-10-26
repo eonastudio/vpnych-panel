@@ -49,6 +49,7 @@ import (
 	"mikan/internal/panel/support"
 	"mikan/internal/panel/tgate"
 	"mikan/internal/panel/tgbackup"
+	"mikan/internal/panel/tickets"
 	"mikan/internal/panel/tlscert"
 	"mikan/internal/panel/updates"
 	"mikan/internal/panel/warp"
@@ -75,7 +76,9 @@ type Panel struct {
 	Backups  *tgbackup.Service
 	Importer *panelimport.Importer
 	// Support keeps the support access grants; the operator's terminal hooks into it.
-	Support   *support.Service
+	Support *support.Service
+	// Tickets is support by tickets: the clients write in the bot or the Mini App.
+	Tickets   *tickets.Service
 	Addons    *addons.Manager
 	AddonsAPI *panelapi.Server
 	server    *server.Server
@@ -297,7 +300,9 @@ func NewPanel(st *store.Store, o Options) (*Panel, error) {
 	p.Gateway = tgate.New(tgate.Deps{Store: st, Settings: set, API: o.TelegramAPI, Log: o.Log, Now: o.Now, Billing: p.Billing, Tunnel: tunnel})
 	// The bot's screens, which run as an addon, see the panel through the Panel API: Local
 	// answers their calls (botpanel.RPCHandler).
-	backend := &botpanel.Local{Store: st, Settings: set, Binder: deps.Devices, Users: deps.Users, Billing: p.Billing, Gateway: p.Gateway, SubBase: subBase, Now: o.Now,
+	p.Tickets = tickets.New(st, set, o.Now, hub)
+	deps.Tickets = p.Tickets
+	backend := &botpanel.Local{Store: st, Settings: set, Binder: deps.Devices, Users: deps.Users, Billing: p.Billing, Gateway: p.Gateway, SubBase: subBase, Now: o.Now, Desk: p.Tickets,
 		// Telegram apps refuse a Mini App on a self-signed certificate.
 		MiniApp: func() bool { return o.Certs != nil && o.Certs.Trusted() }}
 	// The panel's API for addons, with the Bot API proxy over the gateway for the addon that
@@ -320,6 +325,7 @@ func NewPanel(st *store.Store, o Options) (*Panel, error) {
 	p.Gateway.SetHandler(p.AddonsAPI.BotSlot())
 	deps.Telegram, deps.Gateway = p.Telegram, p.Gateway
 	p.Support.SetNotifier(p.tellAdminOfSupport)
+	p.Tickets.SetNotifier(p.tellAdminOfTicket)
 	p.Billing.SetTelegram(p.Gateway)
 	p.Updates = updates.New(o.DataDir, o.Version, o.Releases, o.Log, o.Now)
 	deps.Updates = p.Updates
@@ -523,6 +529,7 @@ func NewPanel(st *store.Store, o Options) (*Panel, error) {
 	subHandler.SetReissuer(deps.Users)
 	subHandler.SetShop(p.Billing)
 	subHandler.SetPromo(promos)
+	subHandler.SetTickets(p.Tickets)
 	subHandler.SetPages(pages)
 
 	adminMux := http.NewServeMux()

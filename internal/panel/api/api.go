@@ -42,6 +42,7 @@ import (
 	"mikan/internal/panel/support"
 	"mikan/internal/panel/tgate"
 	"mikan/internal/panel/tgbackup"
+	"mikan/internal/panel/tickets"
 	"mikan/internal/panel/tlscert"
 	"mikan/internal/panel/updates"
 	"mikan/internal/panel/warp"
@@ -108,6 +109,8 @@ type Deps struct {
 	Importer *panelimport.Importer
 	// Billing sells tariffs; SubBase is https://host:port/<sub path> ("" without an address).
 	Billing *billing.Service
+	// Tickets is support by tickets.
+	Tickets *tickets.Service
 	// Warp registers WARP accounts with Cloudflare.
 	Warp    warp.Client
 	SubBase func(ctx context.Context) string
@@ -311,6 +314,7 @@ func New(d Deps) (http.Handler, huma.API, error) {
 	h.registerCampaigns()
 	h.registerBalance()
 	h.registerWallet()
+	h.registerTickets()
 	h.registerSites()
 	h.registerTelegram()
 	h.registerUpdates()

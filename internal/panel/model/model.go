@@ -154,6 +154,34 @@ type Topup struct {
 	Reason    string        `json:"Reason"`
 }
 
+// Ticket states.
+const (
+	TicketOpen     = "open"     // waits for the admin
+	TicketAnswered = "answered" // the admin spoke last
+	TicketClosed   = "closed"
+)
+
+// Ticket is a support ticket of a Telegram account. Unread: the admin answered since the
+// account last looked.
+type Ticket struct {
+	ID        int64  `json:"ID"`
+	TgID      int64  `json:"TgID"`
+	Subject   string `json:"Subject"`
+	Status    string `json:"Status"`
+	Unread    bool   `json:"Unread"`
+	CreatedAt int64  `json:"CreatedAt"`
+	UpdatedAt int64  `json:"UpdatedAt"`
+}
+
+// TicketMessage is one message of a ticket; Photo is a Telegram file id.
+type TicketMessage struct {
+	ID        int64  `json:"ID"`
+	FromAdmin bool   `json:"FromAdmin"`
+	Body      string `json:"Body"`
+	Photo     string `json:"Photo"`
+	CreatedAt int64  `json:"CreatedAt"`
+}
+
 // BalanceOp is one change of an account's balance.
 type BalanceOp struct {
 	ID        int64         `json:"ID"`

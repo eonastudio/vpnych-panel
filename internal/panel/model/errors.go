@@ -57,6 +57,11 @@ var (
 	ErrTopupGone     = errors.New("topup_gone")     // decided already, or no such top-up
 	ErrTopupCurrency = errors.New("topup_currency") // the balance's currency changed since
 
+	ErrTicketGone  = errors.New("ticket_gone")  // no such ticket of the account
+	ErrTicketMany  = errors.New("ticket_many")  // as many tickets are open as may be
+	ErrTicketEmpty = errors.New("ticket_empty") // no text and no photo
+	ErrTicketOff   = errors.New("ticket_off")   // the admin turned the tickets off
+
 	// ErrProviderOff: no way to pay takes the purchase now.
 	ErrProviderOff = errors.New("provider_off")
 	// ErrPromo is any refusal of a promo code as it crosses to the bot: the buyer is told one
@@ -134,6 +139,10 @@ var codes = []struct {
 	{"devices_max", ErrDevicesMax},
 	{"topup_gone", ErrTopupGone},
 	{"topup_currency", ErrTopupCurrency},
+	{"ticket_gone", ErrTicketGone},
+	{"ticket_many", ErrTicketMany},
+	{"ticket_empty", ErrTicketEmpty},
+	{"ticket_off", ErrTicketOff},
 	{"provider_off", ErrProviderOff},
 	{"promo_unavailable", ErrPromo},
 	{"context_canceled", context.Canceled},

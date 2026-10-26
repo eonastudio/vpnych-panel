@@ -102,6 +102,10 @@ func (b *Bot) onMessage(ctx context.Context, m *tgapi.Message) {
 		}
 		return
 	}
+	// So does a message for support, after its button.
+	if b.ticketMessage(ctx, w, m) {
+		return
+	}
 	switch {
 	case strings.HasPrefix(text, "/start "+model.CampaignPrefix):
 		// An ad's link: the account counts to the campaign, the menu greets it as usual.

@@ -87,6 +87,22 @@ type Backend interface {
 	Shop() Shop
 	// Tariff is one tariff, for what a trial, a free plan or an invoice gives.
 	Tariff(ctx context.Context, id int64) (model.Tariff, error)
+
+	// TicketsOn: the accounts may write to support by tickets (the admin's switch).
+	TicketsOn(ctx context.Context) bool
+	// Tickets are the account's tickets; TicketThread one of them with its messages, whose
+	// answers count as read then (model.ErrTicketGone when it is not the account's).
+	Tickets(ctx context.Context, tgID int64) ([]model.Ticket, error)
+	TicketThread(ctx context.Context, tgID, id int64) (model.Ticket, []model.TicketMessage, error)
+	// TicketCompose is the ticket the chat writes to after its button (0: a new one); ok is
+	// false when it writes to none. SetTicketCompose starts that (on) or stops it.
+	TicketCompose(ctx context.Context, tgID int64) (id int64, ok bool)
+	SetTicketCompose(ctx context.Context, tgID, id int64, on bool) error
+	// PostTicket is the account's message to ticket id, or a new ticket when id is 0, with
+	// a photo (a Telegram file id) or none.
+	PostTicket(ctx context.Context, tgID, id int64, text, photo string) (model.Ticket, error)
+	// CloseTicket is the account closing its ticket.
+	CloseTicket(ctx context.Context, tgID, id int64) error
 }
 
 // Shop is the panel's billing as the bot's screens use it.

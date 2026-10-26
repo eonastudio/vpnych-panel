@@ -182,6 +182,52 @@ func (r *Remote) Tariff(ctx context.Context, id int64) (model.Tariff, error) {
 	return t, err
 }
 
+func (r *Remote) TicketsOn(ctx context.Context) bool {
+	var on bool
+	_ = r.call(ctx, "TicketsOn", nil, &on)
+	return on
+}
+
+func (r *Remote) Tickets(ctx context.Context, tgID int64) ([]model.Ticket, error) {
+	var ts []model.Ticket
+	err := r.call(ctx, "Tickets", []any{tgID}, &ts)
+	return ts, err
+}
+
+func (r *Remote) TicketThread(ctx context.Context, tgID, id int64) (model.Ticket, []model.TicketMessage, error) {
+	var (
+		t    model.Ticket
+		msgs []model.TicketMessage
+	)
+	err := r.call(ctx, "TicketThread", []any{tgID, id}, &t, &msgs)
+	return t, msgs, err
+}
+
+func (r *Remote) TicketCompose(ctx context.Context, tgID int64) (int64, bool) {
+	var (
+		id int64
+		ok bool
+	)
+	if err := r.call(ctx, "TicketCompose", []any{tgID}, &id, &ok); err != nil {
+		return 0, false
+	}
+	return id, ok
+}
+
+func (r *Remote) SetTicketCompose(ctx context.Context, tgID, id int64, on bool) error {
+	return r.call(ctx, "SetTicketCompose", []any{tgID, id, on})
+}
+
+func (r *Remote) PostTicket(ctx context.Context, tgID, id int64, text, photo string) (model.Ticket, error) {
+	var t model.Ticket
+	err := r.call(ctx, "PostTicket", []any{tgID, id, text, photo}, &t)
+	return t, err
+}
+
+func (r *Remote) CloseTicket(ctx context.Context, tgID, id int64) error {
+	return r.call(ctx, "CloseTicket", []any{tgID, id})
+}
+
 // remoteShop is Shop over the Panel API ("Shop.<method>").
 type remoteShop struct{ r *Remote }
 

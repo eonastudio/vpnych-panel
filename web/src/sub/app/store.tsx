@@ -15,6 +15,8 @@ export type Screen =
   | { name: "docs" }
   | { name: "doc"; id: number }
   | { name: "promo" }
+  | { name: "support" }
+  | { name: "ticket"; id: number }
   | { name: "reissue" };
 
 export type Toast = { id: number; text: string; kind: "ok" | "err" };

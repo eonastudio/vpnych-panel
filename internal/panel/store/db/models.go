@@ -593,6 +593,34 @@ type TgNotice struct {
 	SentAt int64
 }
 
+type Ticket struct {
+	ID          int64
+	TgID        int64
+	Subject     string
+	Status      string
+	Source      string
+	AdminUnread bool
+	UserUnread  bool
+	CreatedAt   int64
+	UpdatedAt   int64
+}
+
+type TicketCompose struct {
+	TgID      int64
+	TicketID  int64
+	CreatedAt int64
+}
+
+type TicketMessage struct {
+	ID        int64
+	TicketID  int64
+	FromAdmin bool
+	AdminID   sql.NullInt64
+	Body      string
+	Photo     string
+	CreatedAt int64
+}
+
 type Topup struct {
 	ID        int64
 	TgID      int64

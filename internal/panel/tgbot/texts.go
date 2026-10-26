@@ -37,6 +37,10 @@ type words struct {
 	// menuApp is the Mini App button next to the input field. It shares the row with the
 	// field: a long one leaves no room to type on a phone.
 	menuApp string
+	// Support by tickets.
+	ticketsTitle, ticketsEmpty, ticketsPick, ticketsNew, ticketsWrite, ticketsWriteTo, ticketsSent, ticketsReply, ticketsClose, ticketsClosed, ticketsOpen string
+	ticketsAnswer, ticketsClosedBy, ticketsYou, ticketsSupport, ticketsPhoto, ticketWaiting, ticketAnswered, ticketClosedState                             string
+	ticketsMany, ticketsEmptyMsg, ticketsOff, ticketsGone, ticketsFailed                                                                                   string
 
 	// The shop.
 	balanceButton, balanceTitle, balanceHint, balanceOff, balanceLow, balancePaid, payBalance, topupButton, topupTitle, topupAmountAsk, topupFrom, topupTo, topupFromTo, topupPay, topupShot, topupSent, topupBad, topupMany, topupNone, topupCancelled, topupApproved, topupRejected, opTopup, opSpend, opRefund, opAdjust string
@@ -117,6 +121,13 @@ var ru = words{
 	months:   [12]string{"января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"},
 	commands: "Главное меню",
 	menuApp:  "Подписка",
+
+	ticketsTitle: "💬 Поддержка", ticketsEmpty: "Здесь пока пусто. Нажмите «Новое обращение» и опишите вопрос — ответ придёт в этот чат.", ticketsPick: "Ваши обращения: откройте, чтобы прочитать переписку или ответить.",
+	ticketsNew: "✍️ Новое обращение", ticketsWrite: "Опишите вопрос одним сообщением. Можно приложить скриншот с подписью.", ticketsWriteTo: "Напишите ответ по обращению «%s» одним сообщением. Можно приложить скриншот.",
+	ticketsSent: "📨 Сообщение отправлено в поддержку. Ответ придёт в этот чат.", ticketsReply: "✍️ Ответить", ticketsClose: "✅ Вопрос решён, закрыть", ticketsClosed: "Обращение закрыто. Если вопрос вернётся, просто напишите в нём снова.", ticketsOpen: "💬 Открыть обращение",
+	ticketsAnswer: "💬 Ответ поддержки по обращению «%s»", ticketsClosedBy: "✅ Поддержка закрыла обращение «%s». Если вопрос остался, напишите в нём снова.", ticketsYou: "Вы", ticketsSupport: "Поддержка", ticketsPhoto: "📷",
+	ticketWaiting: "ждёт ответа", ticketAnswered: "есть ответ", ticketClosedState: "закрыто",
+	ticketsMany: "Открытых обращений уже %d. Дождитесь ответа или закройте решённые.", ticketsEmptyMsg: "Пустое сообщение не отправить: напишите текст или пришлите скриншот.", ticketsOff: "Обращения в поддержку сейчас не принимаются.", ticketsGone: "Обращение не найдено.", ticketsFailed: "Не удалось отправить, попробуйте ещё раз чуть позже.",
 
 	balanceButton: "💰 Баланс: %s", balanceTitle: "💰 На балансе %s", balanceHint: "Баланс пополняется переводом: нажмите «Пополнить», укажите сумму и пришлите скриншот перевода. После проверки деньги появятся на балансе, ими можно оплатить подписку, продление и докупки.", balanceOff: "Баланс сейчас недоступен.", balanceLow: "На балансе не хватает денег. Пополните его в меню «💰 Баланс».", balancePaid: "✅ Оплачено с баланса: %s. Сейчас придёт сообщение о покупке.", payBalance: "💰 С баланса · %s", topupButton: "➕ Пополнить", topupTitle: "Пополнение баланса", topupAmountAsk: "Выберите сумму или напишите её сообщением, например 750.", topupFrom: "Сумма от %s.", topupTo: "Сумма до %s.", topupFromTo: "Сумма от %s до %s.", topupPay: "Переведите %s", topupShot: "Затем пришлите сюда скриншот перевода одной картинкой.", topupSent: "📨 Заявка на %s отправлена. Мы проверим перевод и пополним баланс, об этом придёт сообщение.", topupBad: "Такую сумму не принять: проверьте границы.", topupMany: "Уже есть заявки на проверке. Дождитесь ответа.", topupNone: "Заявка не найдена, начните пополнение заново.", topupCancelled: "Пополнение отменено.", topupApproved: "✅ Баланс пополнен на %s. Теперь на нём %s.", topupRejected: "❌ Пополнение на %s отклонено.", opTopup: "пополнение", opSpend: "оплата", opRefund: "возврат", opAdjust: "изменено администратором",
 	buy: "🛒 Купить подписку", buyAnother: "➕ Ещё одна подписка", buyTitle: "Выберите тариф", renewTitle: "Продление подписки «%s»: выберите тариф",
@@ -230,6 +241,13 @@ var en = words{
 	months:   [12]string{"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"},
 	commands: "Main menu",
 	menuApp:  "Subscription",
+
+	ticketsTitle: "💬 Support", ticketsEmpty: "Nothing here yet. Press “New request” and describe your question — the answer comes to this chat.", ticketsPick: "Your requests: open one to read the conversation or answer.",
+	ticketsNew: "✍️ New request", ticketsWrite: "Describe your question in one message. A screenshot with a caption is fine too.", ticketsWriteTo: "Write your answer to “%s” in one message. A screenshot is fine too.",
+	ticketsSent: "📨 The message is sent to support. The answer comes to this chat.", ticketsReply: "✍️ Answer", ticketsClose: "✅ Solved, close it", ticketsClosed: "The request is closed. If the question comes back, just write in it again.", ticketsOpen: "💬 Open the request",
+	ticketsAnswer: "💬 Support answered “%s”", ticketsClosedBy: "✅ Support closed “%s”. If the question is still there, write in it again.", ticketsYou: "You", ticketsSupport: "Support", ticketsPhoto: "📷",
+	ticketWaiting: "waiting for an answer", ticketAnswered: "answered", ticketClosedState: "closed",
+	ticketsMany: "You have %d open requests already. Wait for the answers or close the solved ones.", ticketsEmptyMsg: "An empty message cannot be sent: write some text or send a screenshot.", ticketsOff: "Support requests are not taken now.", ticketsGone: "The request is not found.", ticketsFailed: "Could not send it, try again a bit later.",
 
 	balanceButton: "💰 Balance: %s", balanceTitle: "💰 Your balance is %s", balanceHint: "The balance is topped up by a transfer: press “Top up”, give the amount and send a screenshot of the transfer. Once checked, the money is on the balance and pays for a subscription, a renewal and extras.", balanceOff: "The balance is not available now.", balanceLow: "The balance is not enough. Top it up in “💰 Balance”.", balancePaid: "✅ Paid from the balance: %s. A message about the purchase comes next.", payBalance: "💰 From the balance · %s", topupButton: "➕ Top up", topupTitle: "Top up the balance", topupAmountAsk: "Pick an amount or write it in a message, e.g. 750.", topupFrom: "From %s.", topupTo: "Up to %s.", topupFromTo: "From %s to %s.", topupPay: "Transfer %s", topupShot: "Then send a screenshot of the transfer here, as one picture.", topupSent: "📨 The request for %s is sent. We check the transfer and top up the balance; a message comes then.", topupBad: "This amount cannot be taken: check the bounds.", topupMany: "Requests are being checked already. Wait for the answer.", topupNone: "The request is not found, start the top-up again.", topupCancelled: "The top-up is cancelled.", topupApproved: "✅ The balance is topped up with %s. It is %s now.", topupRejected: "❌ The top-up of %s is declined.", opTopup: "top-up", opSpend: "payment", opRefund: "refund", opAdjust: "changed by the admin",
 	buy: "🛒 Buy a subscription", buyAnother: "➕ Another subscription", buyTitle: "Pick a plan", renewTitle: "Renew subscription “%s”: pick a plan",

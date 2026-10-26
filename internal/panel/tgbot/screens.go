@@ -38,6 +38,8 @@ func (b *Bot) screen(ctx context.Context, cfg Config, chat int64, data, notice s
 	switch cmd {
 	case "bl", "bt", "ba", "bx":
 		return b.balanceScreen(ctx, w, chat, cmd, notice)
+	case "k", "kt", "kw":
+		return b.ticketScreen(ctx, w, chat, cmd, arg, notice)
 	}
 	// Buying a new subscription works with or without one.
 	if b.canBuyNew(ctx) {
@@ -133,15 +135,15 @@ func (b *Bot) screen(ctx context.Context, cfg Config, chat int64, data, notice s
 	case "r":
 		if offers, _ := b.offers(ctx); len(offers) > 0 {
 			text, kb := b.shopList(ctx, w, fmt.Sprintf(w.renewTitle, u.Name), "t", notice, nil)
-			if sup := b.supportURL(ctx); sup != "" {
-				kb.InlineKeyboard = append(kb.InlineKeyboard, []tgapi.Button{{Text: labelOf(cfg, "support", w.support), URL: sup}})
+			if btn, ok := b.supportButton(ctx, cfg, w, chat, ""); ok {
+				kb.InlineKeyboard = append(kb.InlineKeyboard, []tgapi.Button{btn})
 			}
 			kb.InlineKeyboard = append(kb.InlineKeyboard, back)
 			return text, kb
 		}
 		rows := [][]tgapi.Button{}
-		if sup := b.supportURL(ctx); sup != "" {
-			rows = append(rows, []tgapi.Button{{Text: labelOf(cfg, "support", w.support), URL: sup}})
+		if btn, ok := b.supportButton(ctx, cfg, w, chat, ""); ok {
+			rows = append(rows, []tgapi.Button{btn})
 		}
 		return withNotice(render(pick(cfg.Texts.Renew, w.renew), vars)), &tgapi.Keyboard{InlineKeyboard: append(rows, back)}
 	case "p":
@@ -189,8 +191,8 @@ func (b *Bot) welcome(ctx context.Context, cfg Config, w *words, chat int64, not
 	if btn, ok := b.balanceButton(ctx, w, chat); ok {
 		rows = append(rows, []tgapi.Button{btn})
 	}
-	if sup := b.supportURL(ctx); sup != "" {
-		rows = append(rows, []tgapi.Button{{Text: labelOf(cfg, "support", w.support), URL: sup}})
+	if btn, ok := b.supportButton(ctx, cfg, w, chat, ""); ok {
+		rows = append(rows, []tgapi.Button{btn})
 	}
 	if rows == nil {
 		return text, nil
@@ -216,11 +218,10 @@ func (b *Bot) menu(ctx context.Context, cfg Config, w *words, chat int64, subs i
 		case "renew":
 			btn = tgapi.Button{Text: mb.Label, CallbackData: "r"}
 		case "support":
-			sup := b.supportURL(ctx)
-			if sup == "" {
+			var ok bool
+			if btn, ok = b.supportButton(ctx, cfg, w, chat, mb.Label); !ok {
 				continue
 			}
-			btn = tgapi.Button{Text: mb.Label, URL: sup}
 		case "app":
 			var ok bool
 			if btn, ok = b.pageButton(ctx, cfg, w, mb.Label); !ok {
@@ -387,6 +388,8 @@ func (b *Bot) act(ctx context.Context, chat int64, data string) (screen, notice 
 	switch cmd {
 	case "bt", "ba", "bx":
 		return b.balanceAct(ctx, chat, cmd, arg)
+	case "kn", "kr", "kc", "kx":
+		return b.ticketAct(ctx, chat, cmd, arg)
 	case "du":
 		w := wordsFor(b.config(ctx).Lang)
 		_, u, ok := b.subs(ctx, chat)

@@ -42,6 +42,8 @@ func (h *Handler) miniApp(w http.ResponseWriter, r *http.Request, rest string) {
 		h.miniAppShop(w, r, rest)
 	case r.Method == http.MethodPost && rest == "free" && sameOrigin(r) && h.shop != nil:
 		h.miniAppFree(w, r)
+	case r.Method == http.MethodPost && rest == "tickets" && sameOrigin(r) && h.tickets != nil:
+		h.miniAppTickets(w, r)
 	case r.Method == http.MethodPost && (rest == "promo" || rest == "promo-history") && sameOrigin(r) && h.promos != nil:
 		if rest == "promo-history" {
 			h.miniAppPromoHistory(w, r)

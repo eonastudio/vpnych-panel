@@ -28,6 +28,7 @@ import (
 	"mikan/internal/panel/store"
 	"mikan/internal/panel/store/db"
 	"mikan/internal/panel/subpage"
+	"mikan/internal/panel/tickets"
 	"mikan/internal/proto"
 	"mikan/internal/textutil"
 )
@@ -102,6 +103,7 @@ type Handler struct {
 	tg         Telegram         // nil: no bot
 	shop       *billing.Service // nil: nothing on sale
 	promos     *promo.Service
+	tickets    *tickets.Service // nil: the Mini App has no support screen
 	pages      *subpage.Service // nil: the page as built, nothing of the admin's
 	balance    *domain.Balancer // nil: every node shows
 	happ       *HappLinks       // Happ crypt links, kept per subscription

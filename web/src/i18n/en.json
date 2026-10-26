@@ -36,7 +36,8 @@
     "telegram": "Telegram",
     "addons": "Addons",
     "payments": "Payments",
-    "diagnostics": "Diagnostics"
+    "diagnostics": "Diagnostics",
+    "tickets": "Tickets"
   },
   "navShort": {
     "overview": "Overview",
@@ -47,7 +48,8 @@
     "nodes": "Nodes",
     "addons": "Addons",
     "payments": "Payments",
-    "diagnostics": "Diagnostics"
+    "diagnostics": "Diagnostics",
+    "tickets": "Tickets"
   },
   "shell": {
     "update": "{v} is out",
@@ -601,7 +603,11 @@
       "bad_unbind_limit": "Devices per period: 0 to 100, 0 for no limit",
       "bad_unbind_days": "Period: 1 to 365 days",
       "bad_return_hours": "Pause: 0 to 720 hours, or \"Never\"",
-      "required": "Fill in this field"
+      "required": "Fill in this field",
+      "ticket_gone": "Ticket not found",
+      "ticket_many": "Too many open tickets",
+      "ticket_empty": "Write the message text",
+      "ticket_off": "Support tickets are off"
     },
     "acme": {
       "port80_busy": "Port 80 is held by another program, and the certificate authority checks the server through it. If it is nginx or Caddy, the command below lets the check through to ВПНыч; otherwise free the port",
@@ -2683,7 +2689,34 @@
         "disabled": "Paused"
       },
       "addDeviceText": "One more device in 3 steps, with a QR code",
-      "qrScan": "Scan the QR code in the app on your other device"
+      "qrScan": "Scan the QR code in the app on your other device",
+      "ticketsTop": "Support",
+      "ticketsBottom": "is here",
+      "ticketsList": "Your tickets",
+      "ticketsEmpty": "No tickets yet",
+      "ticketsLoading": "Loading",
+      "ticketsNew": "New ticket",
+      "ticketsNewPlaceholder": "Tell us what happened",
+      "ticketsAnswer": "Reply",
+      "ticketsAnswerPlaceholder": "Your reply",
+      "ticketsSend": "Send",
+      "ticketsSent": "Message sent",
+      "ticketsClose": "Close the ticket",
+      "ticketsClosed": "Ticket closed",
+      "ticketsYou": "You",
+      "ticketsSupport": "Support",
+      "ticketsPhoto": "🖼",
+      "ticketsBotNote": "The answer also comes in the bot. A picture can be sent through the bot.",
+      "ticketsMany": "At most {n} open tickets: close one of them",
+      "ticketsEmptyMsg": "Write the message text",
+      "ticketsOff": "Support tickets are off right now",
+      "ticketsGone": "Ticket not found",
+      "ticketsFailed": "That did not work, try again",
+      "ticketStatus": {
+        "open": "waiting",
+        "answered": "answered",
+        "closed": "closed"
+      }
     }
   },
   "nodes": {
@@ -4782,7 +4815,8 @@
       "torrent": "Torrents",
       "traffic_detail": "Traffic by site",
       "updates": "Updates",
-      "user": "Clients"
+      "user": "Clients",
+      "ticket": "Tickets"
     },
     "action": {
       "auth": {
@@ -4842,6 +4876,12 @@
       "balance": {
         "topup": "Top-up decided",
         "adjust": "Balance changed by hand"
+      },
+      "ticket": {
+        "reply": "Ticket answered",
+        "status": "Ticket status changed",
+        "delete": "Ticket deleted",
+        "settings": "Ticket settings"
       }
     },
     "target": {
@@ -4867,7 +4907,45 @@
       "telegram": "bot {id}",
       "certificate": "certificate {id}",
       "users": "clients {id}",
-      "sub_page_image": "subscription page image {id}"
+      "sub_page_image": "subscription page image {id}",
+      "ticket": "ticket #{id}"
     }
+  },
+  "tickets": {
+    "title": "Tickets",
+    "sub": "Clients write to support in the bot or the Mini App. The answer reaches the client in the bot; the bot tells the admin chat about new messages.",
+    "filter": "Show",
+    "all": "All",
+    "status": {
+      "open": "Waiting",
+      "answered": "Answered",
+      "closed": "Closed"
+    },
+    "source": {
+      "bot": "bot",
+      "miniapp": "Mini App"
+    },
+    "emptyOpen": "No new tickets",
+    "empty": "No tickets",
+    "emptyText": "Turn tickets on above: the Support button in the bot and the Mini App will open a conversation with you instead of the link.",
+    "unread": "Unread messages",
+    "more": "Show more",
+    "enabled": "Support tickets",
+    "enabledSub": "The Support button opens a conversation in the bot and the Mini App. Off, it leads to the support link from the bot settings.",
+    "turnedOn": "Tickets are on",
+    "turnedOff": "Tickets are off",
+    "you": "Support",
+    "photo": "Picture from the client",
+    "reply": "Answer",
+    "replyPlaceholder": "Hello! …",
+    "replyHint": "The client gets the answer in the bot and can reply to it.",
+    "send": "Send",
+    "sent": "Answer sent",
+    "close": "Close",
+    "reopen": "Reopen",
+    "delete": "Delete",
+    "deleted": "Ticket deleted",
+    "deleteTitle": "Delete the ticket?",
+    "deleteText": "The conversation is deleted for good, for the client too."
   }
 }

@@ -32,6 +32,7 @@ import {
   PlatformIcon,
 } from "./icons";
 import { usePromo } from "./promo";
+import { useSupport } from "./support";
 import { useInfo, useStore, type ShopKind } from "./store";
 import { Avatar, Button, Card, Footnote, haptic, Sheet, Title } from "./ui";
 
@@ -93,7 +94,7 @@ export function UserHeader({ showBanner = true }: { showBanner?: boolean }) {
     }
   });
   const name = tgFullName || t("sub.app.guest");
-  const support = safeHref(info?.support_url, { tg: true });
+  const support = useSupport();
   const go = (f: () => void) => () => {
     setOpen(false);
     f();
@@ -178,7 +179,7 @@ export function UserHeader({ showBanner = true }: { showBanner?: boolean }) {
               </button>
             ) : null}
             {support ? (
-              <button type="button" onClick={go(() => openOutside(support))}>
+              <button type="button" onClick={go(() => support())}>
                 <IconHeadphones />
                 {t("sub.support")}
               </button>
@@ -552,11 +553,11 @@ function PromoCard() {
 function HelpCard() {
   const { info, page, push, subURL } = useStore();
   const docs = page.docs.length > 0 && !!subURL;
-  const support = safeHref(info?.support_url, { tg: true });
+  const support = useSupport();
   if (!support && !docs) return null;
   const rows = [
     docs ? { key: "docs", icon: <IconBook size={28} />, title: t("sub.docs"), text: t("sub.app.helpDocsText"), go: () => push({ name: "docs" }) } : null,
-    support ? { key: "support", icon: <IconHeadphones size={28} />, title: t("sub.support"), text: t("sub.app.helpSupportText"), go: () => openOutside(support) } : null,
+    support ? { key: "support", icon: <IconHeadphones size={28} />, title: t("sub.support"), text: t("sub.app.helpSupportText"), go: support } : null,
     info?.reissue ? { key: "reissue", icon: <IconRefresh size={28} />, title: t("sub.reissueTitle"), text: t("sub.app.helpReissueText"), go: () => push({ name: "reissue" }) } : null,
   ].filter((r) => r !== null);
   return (
@@ -825,8 +826,8 @@ function TrialOffer({ offer }: { offer: Offer }) {
 
 /** An account without a subscription: the free plan, the trial, the plans on sale. */
 export function NoSub() {
-  const { shop, info } = useStore();
-  const support = safeHref(info?.support_url, { tg: true });
+  const { shop } = useStore();
+  const support = useSupport();
   const selling = !!(shop?.free || shop?.trial || (shop?.allow_new && shop.offers.length));
   const top = shop?.free ? "sub.app.freeTop" : shop?.trial ? "sub.app.trialTop" : "sub.app.noSubTop";
   const bottom = shop?.free ? "sub.app.freeBottom" : shop?.trial ? "sub.app.trialBottom" : "sub.app.noSubBottom";
@@ -841,7 +842,7 @@ export function NoSub() {
             {t("sub.tgNoSubText")}
           </p>
           {support ? (
-            <Button variant="primary" className="mt" onClick={() => openOutside(support)}>
+            <Button variant="primary" className="mt" onClick={support}>
               <IconHeadphones />
               {t("sub.support")}
             </Button>
