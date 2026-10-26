@@ -2681,7 +2681,9 @@
         "expired": "Ended",
         "limited": "Out of traffic",
         "disabled": "Paused"
-      }
+      },
+      "addDeviceText": "One more device in 3 steps, with a QR code",
+      "qrScan": "Scan the QR code in the app on your other device"
     }
   },
   "nodes": {

@@ -590,19 +590,22 @@ function HelpCard() {
   );
 }
 
-/** What else is on sale: traffic and a device for the subscription, a new one, the trial. */
+/** What else is on sale: traffic and a device for the subscription, the trial, a new one. A
+ *  subscriber gets connecting one more device at the top instead of buying a new subscription. */
 function Extras({ forNew, skipTrial }: { forNew: boolean; skipTrial?: boolean }) {
   const { shop, packages, push } = useStore();
-  const rows: { kind: ShopKind; title: string; text: string }[] = [];
-  if (!forNew && packages?.packages?.length) rows.push({ kind: "packages", title: t("sub.packages"), text: t("sub.packagesPick") });
-  if (!forNew && packages?.device) rows.push({ kind: "device", title: t("sub.device"), text: packages.device.description || t("sub.devicePick") });
-  if (shop?.trial && !skipTrial) rows.push({ kind: "trial", title: t("sub.trialTitle"), text: shop.trial.description || t("sub.trialPick") });
-  if (shop?.allow_new && shop.offers.length) rows.push({ kind: "new", title: t(forNew ? "sub.shop" : "sub.shopNew"), text: t("sub.shopPick") });
+  const rows: { key: string; title: string; text: string; go: () => void }[] = [];
+  const buy = (kind: ShopKind) => () => push({ name: "shop", kind });
+  if (!forNew) rows.push({ key: "wizard", title: t("sub.app.addDevice"), text: t("sub.app.addDeviceText"), go: () => push({ name: "wizard" }) });
+  if (!forNew && packages?.packages?.length) rows.push({ key: "packages", title: t("sub.packages"), text: t("sub.packagesPick"), go: buy("packages") });
+  if (!forNew && packages?.device) rows.push({ key: "device", title: t("sub.device"), text: packages.device.description || t("sub.devicePick"), go: buy("device") });
+  if (shop?.trial && !skipTrial) rows.push({ key: "trial", title: t("sub.trialTitle"), text: shop.trial.description || t("sub.trialPick"), go: buy("trial") });
+  if (forNew && shop?.allow_new && shop.offers.length) rows.push({ key: "new", title: t("sub.shop"), text: t("sub.shopPick"), go: buy("new") });
   if (!rows.length) return null;
   return (
     <Card className="list-card">
       {rows.map((r) => (
-        <button key={r.kind} type="button" className="list-row" onClick={() => push({ name: "shop", kind: r.kind })}>
+        <button key={r.key} type="button" className="list-row" onClick={r.go}>
           <span className="app-text">
             <b>{r.title}</b>
             <small>{r.text}</small>

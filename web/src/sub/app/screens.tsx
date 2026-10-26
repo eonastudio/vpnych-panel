@@ -5,6 +5,7 @@ import { getLocale, t } from "../../i18n";
 import { Markdown } from "../../lib/markdown";
 import { bytes, dateShort, days, money, period, time } from "../../lib/format";
 import { safeHref } from "../../lib/url";
+import { QR } from "../../components/ui";
 import { APPS, detect, enc, type Platform } from "../apps";
 import { initData, json, openOutside, outside, postJSON, request, subRoot, tokenOf } from "../net";
 import { orderApps, PLATFORMS, type DocView } from "../page";
@@ -144,6 +145,13 @@ export function Wizard() {
                   <IconCopy />
                 </Button>
               </div>
+            </div>
+            <div className="divider" />
+            {/* Another phone or a computer scans the same subscription in its app. */}
+            <div className="card-pad wizard-qr">
+              <label className="label">{t("sub.qrOther")}</label>
+              <QR value={subURL} size={280} label={t("sub.app.qrScan")} />
+              <p className="muted-text">{t("sub.app.qrScan")}</p>
             </div>
             <div className="divider" />
             <div className="card-pad">
