@@ -25,12 +25,12 @@ import (
 // in front of them. A key may read it.
 
 type SubPageView struct {
-	Config      subpage.Page       `json:"config"`
-	Defaults    subpage.Page       `json:"defaults" doc:"Страница по умолчанию — к ней ведёт «Сбросить»"`
-	Brand       string             `json:"brand" doc:"Название бренда (settings.brand)"`
-	BrandAccent string             `json:"brand_accent" doc:"Цвет бренда (settings.brand_accent); его же получают приложения с брендингом"`
-	Logo        *subpage.PageAsset `json:"logo,omitempty"`
-	Background  *subpage.PageAsset `json:"background,omitempty"`
+	Config      subpage.Page                 `json:"config"`
+	Defaults    subpage.Page                 `json:"defaults" doc:"Страница по умолчанию — к ней ведёт «Сбросить»"`
+	Brand       string                       `json:"brand" doc:"Название бренда (settings.brand)"`
+	BrandAccent string                       `json:"brand_accent" doc:"Цвет бренда (settings.brand_accent); его же получают приложения с брендингом"`
+	Logo        *subpage.PageAsset           `json:"logo,omitempty"`
+	Background  *subpage.PageAsset           `json:"background,omitempty"`
 	Images      map[string]subpage.PageAsset `json:"images" doc:"Загруженные картинки шаблонов (фоны bg-* и background, баннеры banner-*) по имени"`
 }
 

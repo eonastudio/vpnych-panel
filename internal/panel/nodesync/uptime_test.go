@@ -48,7 +48,7 @@ func TestUptimeIsCountedByDay(t *testing.T) {
 	}
 
 	n.err = nil
-	check(1)                                   // waits in memory
+	check(1)                                // waits in memory
 	*now = time.Unix(day+86400+30, 0).UTC() // the next day
 	s.refreshHealth(ctx)
 	r := rows()
