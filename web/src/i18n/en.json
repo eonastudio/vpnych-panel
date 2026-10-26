@@ -2674,7 +2674,14 @@
       "devicesMore": "Show all · {n}",
       "devicesLess": "Collapse",
       "buyTitle": "Buy a plan",
-      "buyPick": "Pick a plan below"
+      "buyPick": "Pick a plan below",
+      "state": {
+        "active": "Active",
+        "expiring": "Ending soon",
+        "expired": "Ended",
+        "limited": "Out of traffic",
+        "disabled": "Paused"
+      }
     }
   },
   "nodes": {

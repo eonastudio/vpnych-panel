@@ -10,7 +10,7 @@ import { Button, Skeleton } from "../components/ui";
 import { initI18n, t, useLocale } from "../i18n";
 import { subDicts } from "../i18n/sub";
 import { APPS } from "./apps";
-import { hashParams, initData, json, okData, openOutside, pageURL, postJSON, request, subRoot, tgEvent, tgMode, tokenOf } from "./net";
+import { hashParams, initData, json, okData, openOutside, pageURL, postJSON, request, subRoot, onTgEvent, tgEvent, tgMode, tokenOf } from "./net";
 import { applyLook, readPage, titleOf, type DocView } from "./page";
 import { FreePlan, loadShop, Shop, type ShopData } from "./shop";
 import { PromoSection } from "./promo";
@@ -152,28 +152,10 @@ function SubPage() {
         timers = AFTER_PAYMENT_MS.map((ms) => window.setTimeout(() => refreshRef.current(), ms));
       }
     };
-    const w = window as Window & { Telegram?: { WebView?: { receiveEvent?: (type: string, data: unknown) => void } } };
-    w.Telegram ??= {};
-    w.Telegram.WebView ??= {};
-    const prev = w.Telegram.WebView.receiveEvent;
-    w.Telegram.WebView.receiveEvent = (type, data) => {
-      prev?.(type, data);
-      onEvent(type, data);
-    };
-    const onMessage = (e: MessageEvent) => {
-      if (e.origin !== "https://web.telegram.org" || typeof e.data !== "string") return;
-      try {
-        const m = JSON.parse(e.data) as { eventType?: string; eventData?: unknown };
-        if (m.eventType) onEvent(m.eventType, m.eventData);
-      } catch {
-        // not Telegram's
-      }
-    };
-    window.addEventListener("message", onMessage);
+    const off = onTgEvent(onEvent);
     return () => {
-      window.removeEventListener("message", onMessage);
+      off();
       timers.forEach((id) => window.clearTimeout(id));
-      if (w.Telegram?.WebView) w.Telegram.WebView.receiveEvent = prev;
     };
   }, []);
 

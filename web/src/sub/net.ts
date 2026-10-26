@@ -76,6 +76,57 @@ export function tgEvent(type: string, data: Record<string, unknown> | "" = "") {
   else if (window.parent !== window) window.parent.postMessage(JSON.stringify({ eventType: type, eventData: data }), "https://web.telegram.org");
 }
 
+type TgHandler = (type: string, data: unknown) => void;
+const tgHandlers = new Set<TgHandler>();
+let tgListening = false;
+
+/** Telegram's events to the page. Each client calls its own entry point: Android
+ *  Telegram.WebView.receiveEvent, iOS TelegramGameProxy.receiveEvent, desktop
+ *  TelegramGameProxy_receiveEvent, Telegram Web a message; all of them land here. Returns the
+ *  unsubscribe. */
+export function onTgEvent(handler: TgHandler): () => void {
+  tgHandlers.add(handler);
+  if (!tgListening) {
+    tgListening = true;
+    const receive = (type: string, data: unknown) => {
+      if (typeof data === "string") {
+        try {
+          data = JSON.parse(data);
+        } catch {
+          // a plain string
+        }
+      }
+      tgHandlers.forEach((h) => h(type, data));
+    };
+    type Receiver = { receiveEvent?: TgHandler };
+    const w = window as Window & { Telegram?: { WebView?: Receiver }; TelegramGameProxy?: Receiver; TelegramGameProxy_receiveEvent?: TgHandler };
+    const chain =
+      (prev: TgHandler | undefined): TgHandler =>
+      (type, data) => {
+        prev?.(type, data);
+        receive(type, data);
+      };
+    w.Telegram ??= {};
+    w.Telegram.WebView ??= {};
+    w.Telegram.WebView.receiveEvent = chain(w.Telegram.WebView.receiveEvent);
+    w.TelegramGameProxy ??= {};
+    w.TelegramGameProxy.receiveEvent = chain(w.TelegramGameProxy.receiveEvent);
+    w.TelegramGameProxy_receiveEvent = chain(w.TelegramGameProxy_receiveEvent);
+    window.addEventListener("message", (e) => {
+      if (e.origin !== "https://web.telegram.org" || typeof e.data !== "string") return;
+      try {
+        const m = JSON.parse(e.data) as { eventType?: string; eventData?: unknown };
+        if (m.eventType) receive(m.eventType, m.eventData);
+      } catch {
+        // not Telegram's
+      }
+    });
+  }
+  return () => {
+    tgHandlers.delete(handler);
+  };
+}
+
 /** Opens a link outside the Mini App: Telegram links in Telegram, the rest in the browser. */
 export function openOutside(url: string) {
   // t.me/<name>?start=… with any path or query, over http too: Telegram opens it itself.

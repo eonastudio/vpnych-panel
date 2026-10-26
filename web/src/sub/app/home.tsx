@@ -5,7 +5,7 @@ import { Fragment, useId, useRef, useState, type ReactNode } from "react";
 import { t, tMaybe } from "../../i18n";
 import { Markdown } from "../../lib/markdown";
 import { DEVICE_NAME_MAX, desktopOS, deviceDetails, deviceLabel, reportedName } from "../../lib/devices";
-import { ago, bytes, dateShort, expiryText, period, time } from "../../lib/format";
+import { ago, bytes, dateLong, dateShort, expiryText, period, time } from "../../lib/format";
 import { safeHref } from "../../lib/url";
 import { initData, openOutside, outside, postJSON, subRoot, tgEvent } from "../net";
 import { bannersAt, type PageBanner, type PageBlock, type Template } from "../page";
@@ -204,24 +204,39 @@ function BalanceCard() {
   const support = safeHref(info.support_url, { tg: true });
   const ended = info.state === "expired" || info.state === "limited" || info.state === "disabled";
   const firstName = info.name.split(/\s+/)[0] ?? "";
+  // "47 дней" as a big number and its unit; "завтра" or "истёк 2 дня назад" stays whole.
+  const count = left && !ended ? /^([\d\s  ]+)\s(.+)$/.exec(left.text) : null;
+  const tone = ended ? "bad" : (left?.tone ?? "");
+  const state = ended ? info.state : tone === "warn" ? "expiring" : "active";
   return (
-    <Card className="balance-card">
-      {left ? <div className="days-left">{left.text}</div> : null}
-      <div className="balance-row">
-        <div className="balance">
-          <b>{info.expires_at ? dateShort(info.expires_at) : "∞"}</b>
-          <span>{info.expires_at ? t("sub.app.validUntil") : t("sub.app.noEnd")}</span>
-        </div>
-        {shop?.offers.length ? (
-          <Button variant="primary" className="topup-btn" onClick={() => push({ name: "shop", kind: "renew" })}>
-            {t("sub.shop")}
-          </Button>
-        ) : support ? (
-          <Button variant="primary" className="topup-btn" onClick={() => openOutside(support)}>
-            {t("sub.renew")}
-          </Button>
-        ) : null}
+    <Card className={`balance-card ${tone ? `tone-${tone}` : ""}`}>
+      <div className="balance-head">
+        <span className="label">{t("sub.app.subLabel")}</span>
+        <span className="balance-chip">
+          <i aria-hidden />
+          {t(`sub.app.state.${state}`)}
+        </span>
       </div>
+      <div className="balance-main">
+        {count ? (
+          <b className="balance-num">
+            {count[1]}
+            <small>{count[2]}</small>
+          </b>
+        ) : (
+          <b className={`balance-num ${left ? "balance-word" : ""}`}>{left ? left.text : "∞"}</b>
+        )}
+        <span className="balance-date">{info.expires_at ? t("sub.app.until", { date: dateLong(info.expires_at) }) : t("sub.app.noEnd")}</span>
+      </div>
+      {shop?.offers.length ? (
+        <Button variant="primary" className="topup-btn" onClick={() => push({ name: "shop", kind: "renew" })}>
+          {t("sub.shop")}
+        </Button>
+      ) : support ? (
+        <Button variant="primary" className="topup-btn" onClick={() => openOutside(support)}>
+          {t("sub.renew")}
+        </Button>
+      ) : null}
       {ended ? <div className="warn">{t(`sub.status.${info.state}`, { name: firstName })}</div> : null}
       {info.pools?.map((pool) =>
         pool.limit != null && pool.used >= pool.limit && !pool.extra ? (
