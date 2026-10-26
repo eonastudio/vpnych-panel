@@ -91,6 +91,7 @@ var settingFields = []settingField{
 		return settings.Set(ctx, set, settings.KeyHappHide, false)
 	}),
 	value("happ_hide_settings", settings.KeyHappHide, true, func(b *patchSettingsBody) *bool { return b.HappHide }),
+	value("sub_xray_json", settings.KeyXrayJSON, true, func(b *patchSettingsBody) *bool { return b.XrayJSON }),
 	custom("happ_crypt", true, func(b *patchSettingsBody) *string { return b.HappCrypt }, func(ctx context.Context, set *settings.Settings, v string) error {
 		if v == "off" {
 			v = ""

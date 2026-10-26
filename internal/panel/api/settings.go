@@ -81,6 +81,7 @@ type SettingsView struct {
 	HappRouting      string `json:"happ_routing" doc:"Профиль маршрутизации Happ: ссылка happ://routing/onadd/… (добавить и включить), happ://routing/add/… или happ://routing/off; auto — панель собирает его сама из маршрутизации Clash-профиля (Настройки → Маршрутизация); уходит только в Happ заголовком routing"`
 	HappProviderID   string `json:"happ_provider_id" doc:"Provider ID с happ-proxy.com; без него Happ не принимает hide-settings"`
 	HappHideSettings bool   `json:"happ_hide_settings" doc:"Скрыть в Happ настройки серверов подписки (нужен Provider ID)"`
+	XrayJSON         bool   `json:"sub_xray_json" doc:"Отдавать Happ, v2RayTun, v2rayNG и INCY подписку JSON-массивом Xray-конфигов: первым — группа автовыбора с самым быстрым сервером"`
 	HappCrypt        string `json:"happ_crypt" enum:"off,api,local" doc:"Шифрованная ссылка для кнопки Happ: off — обычная happ://add/, api — через сервис Happ (адрес подписки уходит на crypto.happ.su), local — панель шифрует сама"`
 }
 
@@ -110,6 +111,7 @@ type patchSettingsBody = struct {
 	HappRouting    *string              `json:"happ_routing,omitempty" maxLength:"65536" doc:"happ://routing/…, auto — собрать из маршрутизации; пусто — не отдавать"`
 	HappProvider   *string              `json:"happ_provider_id,omitempty" maxLength:"64"`
 	HappHide       *bool                `json:"happ_hide_settings,omitempty"`
+	XrayJSON       *bool                `json:"sub_xray_json,omitempty"`
 	HappCrypt      *string              `json:"happ_crypt,omitempty" enum:"off,api,local"`
 	PublicHost     *string              `json:"public_host,omitempty" maxLength:"253"`
 	Domain         *string              `json:"domain,omitempty" maxLength:"253"`
@@ -262,6 +264,9 @@ func (h *handlers) readSettings(ctx context.Context) (SettingsView, error) {
 		v.SiteOwn = server.HasOwnSite(filepath.Join(h.d.DataDir, "www"))
 	}
 	if v.AppBranding, err = h.d.Settings.On(ctx, settings.AppBranding); err != nil {
+		return v, err
+	}
+	if v.XrayJSON, err = h.d.Settings.On(ctx, settings.XrayJSON); err != nil {
 		return v, err
 	}
 	if v.HappHideSettings, err = h.d.Settings.On(ctx, settings.HappHide); err != nil {

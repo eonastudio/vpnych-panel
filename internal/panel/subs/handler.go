@@ -47,6 +47,8 @@ type Config struct {
 	AnnounceURL string
 	App         AppBrand // the brand in apps that read operator headers
 	Happ        Happ     // Happ's provider headers and the crypt link of the page
+	// XrayJSON: the apps of XrayJSONApp get the subscription as Xray configs (xrayProfile).
+	XrayJSON bool
 	// SubBase is https://host:port/<sub path> as the panel hands links out; "" without an
 	// address, and the request's own address is taken.
 	SubBase string
@@ -273,6 +275,9 @@ func internalError(w http.ResponseWriter) {
 // is a profile to give.
 func (h *Handler) serveProfile(w http.ResponseWriter, r *http.Request, u db.User, cfg Config) {
 	format := Format(r.Header.Get("User-Agent"), r.Header.Get("Accept"), r.URL.Query().Get("format"))
+	if format == "uri" && cfg.XrayJSON && r.URL.Query().Get("format") == "" && XrayJSONApp(r.UserAgent()) {
+		format = "xray"
+	}
 	// A messenger that builds a preview of a pasted link gets the page, which has the
 	// preview's title and picture and nothing of the user's.
 	if (format == "html" || LinkPreview(r.Header.Get("User-Agent")) && r.URL.Query().Get("format") == "") && h.page != nil {
@@ -364,6 +369,20 @@ func (h *Handler) serveProfile(w http.ResponseWriter, r *http.Request, u db.User
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.Header().Set("Content-Disposition", "attachment; filename*=UTF-8''"+url.PathEscape(fileName(profileTitle(cfg, vars)))+".json")
 		_, _ = w.Write(body)
+	case "xray":
+		body, ps, err := xrayProfile(prof, cfg)
+		if err == nil {
+			h.mikanGroups(w, r, u, prof, ps)
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			_, _ = w.Write(body)
+			return
+		}
+		if !errors.Is(err, ErrNoProxies) {
+			internalError(w)
+			return
+		}
+		// Servers Xray JSON cannot carry (Hysteria 2) may still go as links.
+		fallthrough
 	default:
 		links, ps, err := uris(prof)
 		if err != nil {
@@ -888,6 +907,8 @@ func Format(userAgent, accept, query string) string {
 		return "uri"
 	case "singbox", "sing-box":
 		return "singbox"
+	case "xray", "json":
+		return "xray"
 	case "html":
 		return "html"
 	}

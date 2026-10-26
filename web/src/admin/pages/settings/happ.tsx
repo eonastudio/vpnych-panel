@@ -110,7 +110,16 @@ export function HappCard({ s }: { s: Schemas["SettingsView"] }) {
           </p>
         ) : null}
 
-        <FormActions dirty={dirty} saving={save.isPending && save.variables?.happ_hide_settings === undefined} onReset={reset} />
+        <SwitchRow
+          className="border-t border-[var(--hairline)]"
+          label={t("settings.xrayJson")}
+          sub={t("settings.xrayJsonSub")}
+          checked={s.sub_xray_json}
+          disabled={save.isPending}
+          onChange={(v) => save.mutate({ sub_xray_json: v })}
+        />
+
+        <FormActions dirty={dirty} saving={save.isPending && save.variables?.happ_hide_settings === undefined && save.variables?.sub_xray_json === undefined} onReset={reset} />
       </form>
     </section>
   );

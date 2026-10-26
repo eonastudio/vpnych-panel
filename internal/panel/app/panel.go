@@ -451,6 +451,9 @@ func NewPanel(st *store.Store, o Options) (*Panel, error) {
 		if cfg.App.Enabled, err = set.On(ctx, settings.AppBranding); err != nil {
 			return subs.Config{}, err
 		}
+		if cfg.XrayJSON, err = set.On(ctx, settings.XrayJSON); err != nil {
+			return subs.Config{}, err
+		}
 		if cfg.Happ.HideSettings, err = set.On(ctx, settings.HappHide); err != nil {
 			return subs.Config{}, err
 		}

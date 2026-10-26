@@ -117,6 +117,9 @@ const (
 	KeyHappProvider = "happ_provider_id"
 	KeyHappHide     = "happ_hide_settings"
 	KeyHappCrypt    = "happ_crypt"
+	// KeyXrayJSON: Happ, v2RayTun, v2rayNG and INCY get the subscription as Xray configs,
+	// the auto-select group first (subs.XrayJSONApp).
+	KeyXrayJSON = "sub_xray_json"
 	// KeyLegacySubPath is the path of the subscription links of the panel users were
 	// imported from: "sub" for Marzban and PasarGuard, "api/sub" for Remnawave. The old
 	// tokens lead to the users (legacy_sub_tokens); empty: off.
@@ -153,6 +156,7 @@ var (
 	ShowGoals      = Switch{KeyShowGoals, true}
 	AppBranding    = Switch{KeyAppBranding, false}
 	HappHide       = Switch{KeyHappHide, false}
+	XrayJSON       = Switch{KeyXrayJSON, false}
 	InactiveServer = Switch{KeyInactiveServer, false}
 	TrafficDetail  = Switch{KeyTrafficDetail, false}
 	SupportAccess  = Switch{KeySupportAccess, true}

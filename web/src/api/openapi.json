@@ -6324,6 +6324,9 @@
             "maxLength": 200,
             "type": "string"
           },
+          "sub_xray_json": {
+            "type": "boolean"
+          },
           "support_access": {
             "type": "boolean"
           },
@@ -8776,6 +8779,10 @@
             "description": "Название подписки в приложениях (заголовок profile-title); пусто — бренд. Переменные: {brand} — бренд, {name} — имя пользователя, {date} — дата окончания (ДД.ММ.ГГГГ, МСК), {days} — дней осталось, {used} — израсходовано, {left} — осталось трафика, {total} — всего, {devices} — привязанные устройства (2/3); без срока или лимита — ∞",
             "type": "string"
           },
+          "sub_xray_json": {
+            "description": "Отдавать Happ, v2RayTun, v2rayNG и INCY подписку JSON-массивом Xray-конфигов: первым — группа автовыбора с самым быстрым сервером",
+            "type": "boolean"
+          },
           "support_access": {
             "description": "Разрешить доступ для поддержки (Настройки → Безопасность). Выключено: новый доступ не выдать, действующий закрывается. MIKAN_SUPPORT_ACCESS=off в .env сервера выключает его независимо от этой настройки",
             "type": "boolean"
@@ -8836,6 +8843,7 @@
           "happ_routing",
           "happ_provider_id",
           "happ_hide_settings",
+          "sub_xray_json",
           "happ_crypt"
         ],
         "type": "object"

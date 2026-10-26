@@ -1740,6 +1740,8 @@
     "happHide": "Hide server settings",
     "happHideSub": "Clients will not see or change server addresses, keys and parameters in Happ.",
     "happHideNeedsProvider": "Save the provider ID first: without it Happ does not hide the settings.",
+    "xrayJson": "Auto-select in Happ and Xray apps",
+    "xrayJsonSub": "Happ, v2RayTun, v2rayNG and INCY get the subscription as Xray configs: first the auto-select group (named in Profile), which keeps the fastest working server, then each server on its own. Routing is built into the configs; Hysteria 2 and TUIC are left out.",
     "happLink": "Link for Happ",
     "happLinkHint": "Encrypted: Happ opens the subscription without showing its address. Reissuing the link makes it invalid.",
     "brandAccent": "Brand colour",

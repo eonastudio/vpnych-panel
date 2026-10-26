@@ -111,13 +111,22 @@ func profileRules(cfg Config) []string {
 // HappRoutingOf turns Clash rules into Happ's routing link: a site or IP goes to the list
 // of the first rule that takes it (mihomo's first match), MATCH decides the rest.
 func HappRoutingOf(name string, rules []string) string {
+	r := happListsOf(rules)
+	r.Name, r.UseChunkFiles = name, "true"
+	r.RemoteDNS, r.RemoteDNSType, r.RemoteDNSDomain, r.RemoteDNSIP = "1.1.1.1", "DoH", "https://1.1.1.1/dns-query", "1.1.1.1"
+	r.DomesticDNS, r.DomesticDNSType, r.DomesticDNSDomain, r.DomesticDNSIP = "77.88.8.8", "DoH", "https://77.88.8.8/dns-query", "77.88.8.8"
+	r.GeoipURL, r.GeositeURL, r.DNSHosts = happGeoip, happGeosite, map[string]string{}
+	// The profile sends the blocked and the proxied ahead of the direct.
+	r.RouteOrder, r.DomainStrategy, r.FakeDNS = "block-proxy-direct", "IPIfNonMatch", "false"
+	b, _ := json.Marshal(r)
+	return "happ://routing/onadd/" + base64.StdEncoding.EncodeToString(b)
+}
+
+// happListsOf sorts the sites and IPs of Clash rules into the direct, proxy and block
+// lists in Xray's syntax, and sets GlobalProxy by MATCH; the rest of the profile is empty.
+func happListsOf(rules []string) happProfile {
 	names := happNames()
-	r := happProfile{Name: name, GlobalProxy: "true", UseChunkFiles: "true",
-		RemoteDNS: "1.1.1.1", RemoteDNSType: "DoH", RemoteDNSDomain: "https://1.1.1.1/dns-query", RemoteDNSIP: "1.1.1.1",
-		DomesticDNS: "77.88.8.8", DomesticDNSType: "DoH", DomesticDNSDomain: "https://77.88.8.8/dns-query", DomesticDNSIP: "77.88.8.8",
-		GeoipURL: happGeoip, GeositeURL: happGeosite, DNSHosts: map[string]string{},
-		// The profile sends the blocked and the proxied ahead of the direct.
-		RouteOrder: "block-proxy-direct", DomainStrategy: "IPIfNonMatch", FakeDNS: "false",
+	r := happProfile{GlobalProxy: "true",
 		DirectSites: []string{}, DirectIP: []string{}, ProxySites: []string{}, ProxyIP: []string{}, BlockSites: []string{}, BlockIP: []string{}}
 	seen := map[string]bool{}
 	for _, rule := range rules {
@@ -182,8 +191,7 @@ func HappRoutingOf(name string, rules []string) string {
 	if !seen["geosite:private"] {
 		r.DirectSites = append([]string{"geosite:private"}, r.DirectSites...)
 	}
-	b, _ := json.Marshal(r)
-	return "happ://routing/onadd/" + base64.StdEncoding.EncodeToString(b)
+	return r
 }
 
 // happLists are the geodata categories of the panel's rule lists (Services, DirectSets,
