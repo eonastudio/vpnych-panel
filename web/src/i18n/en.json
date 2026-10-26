@@ -610,7 +610,9 @@
       "ticket_many": "Too many open tickets",
       "ticket_empty": "Write the message text",
       "ticket_off": "Support tickets are off",
-      "bad_referral_days": "The bonus is 1 to 365 days"
+      "bad_referral_days": "The bonus is 1 to 365 days",
+      "bad_status_days": "The page shows 30, 60 or 90 days",
+      "bad_status_title": "The title is at most 80 characters"
     },
     "acme": {
       "port80_busy": "Port 80 is held by another program, and the certificate authority checks the server through it. If it is nginx or Caddy, the command below lets the check through to ВПНыч; otherwise free the port",
@@ -2331,6 +2333,27 @@
     "routesSearchEmpty": "Nothing found",
     "routesSearchEmptyText": "Try another name.",
     "routesListsEmpty": "No own lists yet.",
+    "statusPage": {
+      "title": "Status page",
+      "sub": "A public page: whether the servers work and their uptime by day. Anyone with the address can see it.",
+      "enabled": "Show the page",
+      "enabledSub": "While off, the address answers 404",
+      "name": "Title",
+      "namePlaceholder": "Server status",
+      "nameHint": "Empty — “Server status” in the visitor's language",
+      "days": "Days to show",
+      "daysN": "{n} days",
+      "open": "Open",
+      "copy": "Copy address",
+      "copied": "Address copied",
+      "hint": "The page lists only enabled servers with a public name (set on the server's card).",
+      "none": "No servers with a public name yet.",
+      "up": "Operational",
+      "down": "Down",
+      "unknown": "No data",
+      "noData": "no data",
+      "saved": "Saved"
+    },
     "subDomain": {
       "title": "A domain of its own for subscriptions",
       "sub": "Subscription links on a domain or subdomain of their own, not on the panel's address",

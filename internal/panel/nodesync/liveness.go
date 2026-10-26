@@ -50,6 +50,7 @@ func (s *Syncer) observe(ctx context.Context, view *HealthView) {
 	l := &s.alive
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	s.countUptime(ctx, view)
 	key := stateKeyOf("health", s.id)
 	if !l.read {
 		v, err := s.m.st.Q.GetNodeState(ctx, key)

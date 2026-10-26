@@ -325,6 +325,13 @@ type NodeTrafficHourly struct {
 	RelayDown int64
 }
 
+type NodeUptime struct {
+	NodeID int64
+	Day    int64
+	Checks int64
+	Ok     int64
+}
+
 type NodeWarp struct {
 	NodeID        int64
 	Enabled       int64

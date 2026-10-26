@@ -5620,6 +5620,30 @@
         ],
         "type": "object"
       },
+      "PageDay": {
+        "additionalProperties": false,
+        "properties": {
+          "checks": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "day": {
+            "description": "Начало дня (UTC), unix-секунды",
+            "format": "int64",
+            "type": "integer"
+          },
+          "ok": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "day",
+          "checks",
+          "ok"
+        ],
+        "type": "object"
+      },
       "PageLink": {
         "additionalProperties": false,
         "properties": {
@@ -5640,6 +5664,45 @@
         "required": [
           "label",
           "url"
+        ],
+        "type": "object"
+      },
+      "PageNode": {
+        "additionalProperties": false,
+        "properties": {
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/PageDay"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "since": {
+            "description": "С какого момента нода не отвечает, unix-секунды",
+            "format": "int64",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "up",
+              "down",
+              "unknown"
+            ],
+            "type": "string"
+          },
+          "uptime": {
+            "description": "Доля ответов за показанные дни, 0..1; -1 — проверок не было",
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "state",
+          "uptime",
+          "days"
         ],
         "type": "object"
       },
@@ -5664,6 +5727,32 @@
           "title",
           "description",
           "image"
+        ],
+        "type": "object"
+      },
+      "PageReport": {
+        "additionalProperties": false,
+        "properties": {
+          "days": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/PageNode"
+            },
+            "type": "array"
+          },
+          "updated": {
+            "description": "Когда собрано, unix-секунды",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "days",
+          "nodes",
+          "updated"
         ],
         "type": "object"
       },
@@ -9024,6 +9113,57 @@
           "not_after",
           "ca_wanted",
           "checked_at"
+        ],
+        "type": "object"
+      },
+      "StatusPageOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "report": {
+            "$ref": "#/components/schemas/PageReport"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/StatusPageSettingsView"
+          },
+          "url": {
+            "description": "Адрес страницы; пусто, пока у панели нет адреса",
+            "type": "string"
+          }
+        },
+        "required": [
+          "settings",
+          "url",
+          "report"
+        ],
+        "type": "object"
+      },
+      "StatusPageSettingsView": {
+        "additionalProperties": false,
+        "properties": {
+          "days": {
+            "description": "Сколько дней аптайма показывать",
+            "enum": [
+              30,
+              60,
+              90
+            ],
+            "format": "int64",
+            "type": "integer"
+          },
+          "enabled": {
+            "description": "Страница открыта по адресу подписок /status",
+            "type": "boolean"
+          },
+          "title": {
+            "description": "Заголовок; пусто — «Статус серверов»",
+            "maxLength": 80,
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled",
+          "title",
+          "days"
         ],
         "type": "object"
       },
@@ -17327,6 +17467,79 @@
         "tags": [
           "stats"
         ]
+      }
+    },
+    "/api/v1/status-page": {
+      "get": {
+        "operationId": "get-status-page",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusPageOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Публичная страница статуса: настройки и что она показывает",
+        "tags": [
+          "nodes"
+        ]
+      }
+    },
+    "/api/v1/status-page/settings": {
+      "put": {
+        "operationId": "update-status-page",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusPageSettingsView"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusPageOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Изменить страницу статуса",
+        "tags": [
+          "nodes"
+        ],
+        "x-session-only": true
       }
     },
     "/api/v1/sub-docs": {

@@ -494,6 +494,9 @@ func (m *Manager) prune(ctx context.Context, now time.Time) {
 		m.log.Error("prune devices", "err", err)
 		return
 	}
+	if err := m.st.Q.PruneNodeUptime(ctx, UptimeDay(now.Add(-UptimeKeep))); err != nil {
+		m.log.Error("prune node uptime", "err", err)
+	}
 	if err := m.st.Q.PruneTorrentHits(ctx, now.Add(-torrentKeep).Unix()); err != nil {
 		m.log.Error("prune torrent hits", "err", err)
 		return

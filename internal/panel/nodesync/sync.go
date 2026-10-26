@@ -89,6 +89,7 @@ type Syncer struct {
 
 	health atomic.Pointer[HealthView]
 	alive  liveness // what the addons were told of the node's health (liveness.go)
+	up     uptime   // the day's checks for the status page (uptime.go), under alive.mu
 	online atomic.Pointer[map[string]nodeapi.Online]
 	// relayOnline is the relay's open connections by source (the other nodes' cascades),
 	// a live view like online.

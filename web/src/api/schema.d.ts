@@ -1830,6 +1830,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/status-page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Публичная страница статуса: настройки и что она показывает */
+        get: operations["get-status-page"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/status-page/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Изменить страницу статуса */
+        put: operations["update-status-page"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sub-docs": {
         parameters: {
             query?: never;
@@ -4980,11 +5014,38 @@ export interface components {
             /** @description Строка под названием; пусто — нет */
             subtitle: string;
         };
+        PageDay: {
+            /** Format: int64 */
+            checks: number;
+            /**
+             * Format: int64
+             * @description Начало дня (UTC), unix-секунды
+             */
+            day: number;
+            /** Format: int64 */
+            ok: number;
+        };
         PageLink: {
             emoji?: string;
             label: string;
             /** @description https://, http:// или tg:// */
             url: string;
+        };
+        PageNode: {
+            days: components["schemas"]["PageDay"][];
+            name: string;
+            /**
+             * Format: int64
+             * @description С какого момента нода не отвечает, unix-секунды
+             */
+            since?: number;
+            /** @enum {string} */
+            state: "up" | "down" | "unknown";
+            /**
+             * Format: double
+             * @description Доля ответов за показанные дни, 0..1; -1 — проверок не было
+             */
+            uptime: number;
         };
         PageOG: {
             description: string;
@@ -4992,6 +5053,16 @@ export interface components {
             image: boolean;
             /** @description Заголовок превью; пусто — бренд */
             title: string;
+        };
+        PageReport: {
+            /** Format: int64 */
+            days: number;
+            nodes: components["schemas"]["PageNode"][];
+            /**
+             * Format: int64
+             * @description Когда собрано, unix-секунды
+             */
+            updated: number;
         };
         PageText: {
             en: string;
@@ -6256,6 +6327,24 @@ export interface components {
             retry_at?: string;
             /** @description Сертификат публично доверенный для адреса панели */
             trusted?: boolean;
+        };
+        StatusPageOutputBody: {
+            report: components["schemas"]["PageReport"];
+            settings: components["schemas"]["StatusPageSettingsView"];
+            /** @description Адрес страницы; пусто, пока у панели нет адреса */
+            url: string;
+        };
+        StatusPageSettingsView: {
+            /**
+             * Format: int64
+             * @description Сколько дней аптайма показывать
+             * @enum {integer}
+             */
+            days: 30 | 60 | 90;
+            /** @description Страница открыта по адресу подписок /status */
+            enabled: boolean;
+            /** @description Заголовок; пусто — «Статус серверов» */
+            title: string;
         };
         SubDocBody: {
             /** @description Markdown: заголовки #, списки, **жирный**, *курсив*, код в обратных кавычках, [ссылки](https://…), картинки ![](https://…) */
@@ -11477,6 +11566,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TrafficOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-status-page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusPageOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "update-status-page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusPageSettingsView"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusPageOutputBody"];
                 };
             };
             /** @description Error */

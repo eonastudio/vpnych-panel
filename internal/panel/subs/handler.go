@@ -26,6 +26,7 @@ import (
 	"mikan/internal/panel/promo"
 	"mikan/internal/panel/referral"
 	"mikan/internal/panel/server"
+	"mikan/internal/panel/status"
 	"mikan/internal/panel/store"
 	"mikan/internal/panel/store/db"
 	"mikan/internal/panel/subpage"
@@ -106,6 +107,7 @@ type Handler struct {
 	promos     *promo.Service
 	tickets    *tickets.Service  // nil: the Mini App has no support screen
 	referral   *referral.Service // nil: the Mini App has no referral screen
+	status     *status.Service   // nil: no status page
 	pages      *subpage.Service  // nil: the page as built, nothing of the admin's
 	balance    *domain.Balancer  // nil: every node shows
 	happ       *HappLinks        // Happ crypt links, kept per subscription
@@ -193,6 +195,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r2 := r.Clone(r.Context())
 		r2.URL.Path = "/" + rest
 		h.shop.Webhook().ServeHTTP(w, r2)
+		return
+	}
+	if token == "status" && rest == "" && h.status != nil && (r.Method == http.MethodGet || r.Method == http.MethodHead) {
+		h.statusPage(w, r)
 		return
 	}
 	device := devicePath.FindStringSubmatch(rest)

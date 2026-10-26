@@ -37,6 +37,7 @@ import (
 	"mikan/internal/panel/secure"
 	"mikan/internal/panel/server"
 	"mikan/internal/panel/settings"
+	"mikan/internal/panel/status"
 	"mikan/internal/panel/store"
 	"mikan/internal/panel/store/db"
 	"mikan/internal/panel/subs"
@@ -114,6 +115,8 @@ type Deps struct {
 	Tickets *tickets.Service
 	// Referral is the referral program.
 	Referral *referral.Service
+	// Status is the public status page.
+	Status *status.Service
 	// Warp registers WARP accounts with Cloudflare.
 	Warp    warp.Client
 	SubBase func(ctx context.Context) string
@@ -319,6 +322,7 @@ func New(d Deps) (http.Handler, huma.API, error) {
 	h.registerWallet()
 	h.registerTickets()
 	h.registerReferrals()
+	h.registerStatusPage()
 	h.registerSites()
 	h.registerTelegram()
 	h.registerUpdates()

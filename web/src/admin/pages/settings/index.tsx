@@ -20,6 +20,7 @@ import { AccessCard, ApiCard, CertificateCard, PasswordCard, SessionsCard, TwoFa
 import { SupportCard } from "./support";
 import { AppsCard, DevicesCard, InactiveCard, SubPortCard, SubscriptionCard } from "./subscription";
 import { SubDomainCard } from "./sub-domain";
+import { StatusPageCard } from "./status-page";
 import { SiteCard } from "./site";
 import { HappCard } from "./happ";
 import { SubPageSettings, type SubPagePart } from "./sub-page";
@@ -102,6 +103,7 @@ export function SettingsPage() {
                   <InactiveCard s={s} />
                   <SubDomainCard s={s} />
                   <SubPortCard s={s} />
+                  <StatusPageCard />
                 </>
               ) : tab === "routing" ? (
                 <RoutingSection s={s} part={routingPart} onPart={(p) => go("routing", p)} />

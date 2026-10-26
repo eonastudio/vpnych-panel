@@ -43,6 +43,7 @@ import (
 	"mikan/internal/panel/referral"
 	"mikan/internal/panel/server"
 	"mikan/internal/panel/settings"
+	"mikan/internal/panel/status"
 	"mikan/internal/panel/store"
 	"mikan/internal/panel/store/db"
 	"mikan/internal/panel/subpage"
@@ -81,7 +82,9 @@ type Panel struct {
 	// Tickets is support by tickets: the clients write in the bot or the Mini App.
 	Tickets *tickets.Service
 	// Referral is the referral program: the accounts' links and the friends' rewards.
-	Referral  *referral.Service
+	Referral *referral.Service
+	// Status is the public status page of the nodes.
+	Status    *status.Service
 	Addons    *addons.Manager
 	AddonsAPI *panelapi.Server
 	server    *server.Server
@@ -298,6 +301,8 @@ func NewPanel(st *store.Store, o Options) (*Panel, error) {
 		return p.Gateway.BotURL(ctx)
 	})
 	deps.Referral = p.Referral
+	p.Status = status.New(st, set, o.Now)
+	deps.Status = p.Status
 	p.Billing = billing.New(billing.Deps{Store: st, Settings: set, Users: deps.Users, Log: o.Log, Now: o.Now, TrustProxy: o.TrustProxy,
 		MaxLinks: model.MaxLinks,
 		Addons:   deps.Addons, SubBase: subBase, Promo: promos, Events: hub, Referral: p.Referral,
@@ -542,6 +547,7 @@ func NewPanel(st *store.Store, o Options) (*Panel, error) {
 	subHandler.SetPromo(promos)
 	subHandler.SetTickets(p.Tickets)
 	subHandler.SetReferral(p.Referral)
+	subHandler.SetStatus(p.Status)
 	subHandler.SetPages(pages)
 
 	adminMux := http.NewServeMux()
