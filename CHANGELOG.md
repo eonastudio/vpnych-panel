@@ -3,6 +3,14 @@
 Each release has a section in English and in Russian; the release workflow puts them in
 the signed manifest, and the panel shows the one in its language.
 
+## 0.5.2.2-rc.8
+### en
+- **Mini App in full screen on iPhone**: the page now hears Telegram for iOS (it answers through another entry point), so the content no longer goes under the status bar and Telegram's buttons; the device's safe area is kept too. The Back button and the refresh after paying work on iOS as well.
+- **Subscription card redrawn**: a status chip, the days left in big type and the full end date with the year; the renew button spans the card.
+### ru
+- **Mini App в полноэкранном режиме на iPhone**: страница теперь слышит Telegram для iOS (он отвечает через другую точку входа), поэтому содержимое больше не уходит под строку состояния и кнопки Telegram; учитывается и безопасная зона устройства. На iOS заработали и кнопка «Назад», и обновление после оплаты.
+- **Карточка подписки перерисована**: статус, крупный остаток дней и полная дата окончания с годом; кнопка продления на всю ширину.
+
 ## 0.5.2.2-rc.7
 ### en
 - **Mini App fixes**: the Telegram profile photo shows again; the device setup sheet is bigger on phones; the help card has descriptions; the promo codes page is tidied up and its back button stays in place; a long device list folds behind "Show all"; the checkout says "Buy a plan" until a plan is picked, then shows its price; fullscreen mode no longer puts content under Telegram's buttons.
