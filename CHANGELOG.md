@@ -3,6 +3,22 @@
 Each release has a section in English and in Russian; the release workflow puts them in
 the signed manifest, and the panel shows the one in its language.
 
+## 0.5.2.2-rc.10
+### en
+- **Support tickets**: a client writes to support from the Mini App or the bot, the admin answers in the panel; the conversation, statuses and notifications on both sides.
+- **Referral program**: each client has a personal bot link with a share button and a QR code; a friend’s first paid plan adds the set number of days to the inviter’s subscription. The admin turns it on, sets the days and sees the totals and top referrers.
+- **Public node status page** at <subscription address>/status: the state of each node now and its daily uptime for 30, 60 or 90 days, in Russian and English, also as JSON. Turned on and named in Settings → Subscription.
+- **AmneziaWG** as a node protocol: the preset makes the server key and the obfuscation parameters itself, new users need no restart; clients get it through mihomo.
+- **Auto-select for Happ and Xray apps** (Happ, v2RayTun, v2rayNG, INCY): with the new setting the subscription comes first with an auto-select config that picks the fastest server, then a config per server. Not yet tried in the real apps.
+- Documentation pages for all of the above.
+### ru
+- **Тикеты поддержки**: клиент пишет в поддержку из Mini App или бота, админ отвечает в панели; переписка, статусы и уведомления с обеих сторон.
+- **Реферальная программа**: у каждого клиента личная ссылка на бота с кнопкой «Поделиться» и QR-кодом; первая оплата друга добавляет пригласившему заданное число дней подписки. Админ включает программу, задаёт дни и видит итоги и лучших рефереров.
+- **Публичная страница статуса нод** по адресу <адрес подписки>/status: состояние каждой ноды сейчас и аптайм по дням за 30, 60 или 90 дней, на русском и английском, есть JSON. Включается и называется в Настройки → Подписка.
+- **AmneziaWG** как протокол ноды: пресет сам создаёт ключ сервера и параметры обфускации, новым пользователям не нужен перезапуск; клиенты получают его через mihomo.
+- **Автовыбор в Happ и приложениях на Xray** (Happ, v2RayTun, v2rayNG, INCY): с новой настройкой подписка начинается с конфига автовыбора, который выбирает самый быстрый сервер, затем конфиги по серверам. В реальных приложениях ещё не проверялось.
+- Страницы документации по всем пунктам выше.
+
 ## 0.5.2.2-rc.9
 ### en
 - **Connect a device from the Mini App home**: with a subscription, the extras offer connecting one more device through the setup wizard instead of buying a new subscription.
