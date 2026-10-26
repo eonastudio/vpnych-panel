@@ -7,10 +7,10 @@ import "strings"
 const Hidden = "<hidden>"
 
 // secrets are the values of a template that are credentials: the server's own keys
-// (REALITY's, VLESS Encryption's), the key a protocol of one key for everyone gives every
+// (REALITY's, VLESS Encryption's, AmneziaWG's), the key a protocol of one key for everyone gives every
 // user, and Hysteria2's obfuscation password. The rest (paths, short ids, server names)
 // goes to every subscriber anyway and lets nobody in.
-var secrets = [][]string{{"reality-config", "private-key"}, {"decryption"}, {"password"}, {"psk"}, {"key"}, {"obfs-password"}}
+var secrets = [][]string{{"reality-config", "private-key"}, {"decryption"}, {"password"}, {"psk"}, {"key"}, {"obfs-password"}, {"server-key"}}
 
 // at is the map holding the last key of path in t, and that key; false when the path is
 // not there.

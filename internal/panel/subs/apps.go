@@ -129,9 +129,10 @@ func DetectApp(userAgent string) App {
 // of 2024 go only to a core known to have them: an unknown type fails the profile.
 var mihomoSince = map[string]Version{
 	"anytls": {1, 19, 3}, "mieru": {1, 19, 0}, "sudoku": {1, 19, 17}, "trusttunnel": {1, 19, 21}, "shadowquic": {1, 19, 29},
+	"amneziawg": {1, 19, 0},
 }
 
-var mihomoNewTypes = map[string]bool{"mieru": true, "sudoku": true, "trusttunnel": true, "shadowquic": true}
+var mihomoNewTypes = map[string]bool{"mieru": true, "sudoku": true, "trusttunnel": true, "shadowquic": true, "amneziawg": true}
 
 // geckoSince is the first mihomo with Hysteria2's Gecko obfuscation. Xray and sing-box
 // got it later than the apps on them can be told apart, so only mihomo apps that name

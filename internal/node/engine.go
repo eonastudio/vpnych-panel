@@ -355,6 +355,13 @@ func (e *Engine) apply(st nodeapi.DesiredState) (nodeapi.ApplyResult, error) {
 	if err != nil {
 		return nodeapi.ApplyResult{}, &nodeapi.Error{Code: "invalid_state", Message: err.Error()}
 	}
+	awgs, err := awgListeners(raw)
+	if err != nil {
+		return nodeapi.ApplyResult{}, &nodeapi.Error{Code: "invalid_state", Message: err.Error()}
+	}
+	for name, l := range awgs {
+		cfg.Listeners[name] = l
+	}
 
 	// Listeners are patched below; the way out (WARP and the rules that pick it) is
 	// swapped only when it changed, so open connections keep their outbound otherwise.
@@ -466,8 +473,7 @@ func (e *Engine) Validate(req nodeapi.ValidateRequest) error {
 	if err != nil {
 		return err
 	}
-	_, err = listener.ParseListener(l)
-	return err
+	return checkListener(l)
 }
 
 // TargetAllowed says whether the node may test dest as a REALITY target for the panel:

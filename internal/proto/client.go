@@ -445,6 +445,9 @@ func (c *clientBuilder) finish() (Client, error) {
 		c.q.Del("fp")
 		return Client{c.y, "anytls://" + url.PathEscape(s.Secret) + "@" + c.addr() + "/?" + c.q.Encode() + "#" + name}, nil
 	}
+	if c.t.Type() == "amneziawg" {
+		return c.awgClient()
+	}
 	if cl, ok := c.finishExtra(); ok {
 		return cl, nil
 	}

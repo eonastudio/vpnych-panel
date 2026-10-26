@@ -98,6 +98,8 @@ func users(t Template, slots []Slot, ext Ext) any {
 			out = append(out, map[string]any{"username": s.Name, "password": s.Secret})
 		}
 		return out
+	case "amneziawg":
+		return awgUsers(t, slots)
 	case "tuic":
 		m := make(map[string]string, len(slots))
 		for _, s := range slots {

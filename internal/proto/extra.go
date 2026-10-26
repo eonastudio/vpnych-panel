@@ -103,6 +103,8 @@ func validateExtra(t Template, o Options) error {
 				}
 			}
 		}
+	case "amneziawg":
+		return validateAWG(t)
 	case "snell":
 		if t.str("psk") == "" {
 			return fail("snell_psk", "psk")
@@ -137,6 +139,8 @@ func listenerExtra(t Template, l map[string]any) {
 		l["network"] = []any{"tcp"} // HTTP/2; HTTP/3 would take the UDP port too
 	case "mieru":
 		l["transport"] = "TCP"
+	case "amneziawg":
+		awgListener(t, l)
 	case "snell":
 		// UDP goes inside the Snell stream (v3 on): no UDP port.
 		v := snellVersionOf(t)

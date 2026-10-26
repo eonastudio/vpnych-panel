@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	mrand "math/rand/v2"
 	"net"
 	"strings"
 
@@ -93,6 +94,7 @@ var All = []Info{
 	{ID: "shadowsocks_2022", Title: "Shadowsocks-2022", Summary: "Классика, быстрый. У каждого пользователя свой ключ", Type: "shadowsocks", Network: "tcp", Port: "6443", Name: "shadowsocks", SubName: "Shadowsocks"},
 	{ID: "sudoku", Title: "Sudoku", Summary: "Прячет трафик под HTTP и текст. Один ключ на всех пользователей", Type: "sudoku", Network: "tcp", Port: "7443", Name: "sudoku", SubName: "Sudoku", Apps: "mihomo", Shared: true},
 	{ID: "snell", Title: "Snell", Summary: "Протокол Surge. Один ключ на всех пользователей", Type: "snell", Network: "tcp", Port: "9443", Name: "snell", SubName: "Snell", Apps: "mihomo", Shared: true},
+	{ID: "amneziawg", Title: "AmneziaWG", Summary: "WireGuard, который прячет рукопожатие от DPI мусорными пакетами и своими заголовками. Ключи клиентов создаются сами. Только приложения на ядре mihomo", Type: "amneziawg", Network: "udp", Port: "51820", Name: "amneziawg", SubName: "AmneziaWG", Apps: "mihomo"},
 	{ID: Custom, Title: "Свой конфиг", Summary: "Шаблон листенера mihomo в редакторе: любой поддерживаемый тип и параметры", Network: "", Port: "", Name: "custom", SubName: "Custom"},
 }
 
@@ -177,6 +179,16 @@ func NewConfig(id, dest string) (string, error) {
 			"table-type": "prefer_ascii"}), nil
 	case "snell":
 		return proto.Marshal(proto.Template{"type": "snell", "psk": secure.Token(32), "version": 3}), nil
+	case "amneziawg":
+		key, err := newAWGKey()
+		if err != nil {
+			return "", err
+		}
+		t := proto.Template{"type": "amneziawg", "server-key": key}
+		for k, v := range newAWGParams() {
+			t[k] = v
+		}
+		return proto.Marshal(t), nil
 	case Custom:
 		return "", fmt.Errorf("the custom preset takes the admin's config")
 	default:
@@ -188,6 +200,36 @@ func NewConfig(id, dest string) (string, error) {
 	}
 	t["reality-config"] = r
 	return proto.Marshal(t), nil
+}
+
+// newAWGKey is a fresh WireGuard private key.
+func newAWGKey() (string, error) {
+	k := make([]byte, 32)
+	if _, err := rand.Read(k); err != nil {
+		return "", err
+	}
+	return proto.AWGClampKey(k), nil
+}
+
+// newAWGParams are random obfuscation settings of AmneziaWG, within what its authors
+// suggest: a few junk packets of 50-1000 bytes, padding of 15-150 and four distinct types.
+// They are not secret; random ones keep the nodes of different panels apart.
+func newAWGParams() map[string]any {
+	s1 := 15 + mrand.IntN(136)
+	s2 := 15 + mrand.IntN(136)
+	for s1+56 == s2 {
+		s2 = 15 + mrand.IntN(136)
+	}
+	p := map[string]any{"jc": 3 + mrand.IntN(8), "jmin": 50, "jmax": 1000, "s1": s1, "s2": s2}
+	seen := map[uint32]bool{}
+	for _, k := range []string{"h1", "h2", "h3", "h4"} {
+		h := 5 + mrand.Uint32N(1<<31-5)
+		for seen[h] {
+			h = 5 + mrand.Uint32N(1<<31-5)
+		}
+		seen[h], p[k] = true, h
+	}
+	return p
 }
 
 func randomPath() string { return "/" + strings.ToLower(secure.Token(10)) }
@@ -265,8 +307,8 @@ func Dest(t proto.Template) (dest string, serverNames []string) {
 
 // Rekey gives a copy of an inbound keys of its own, so the copy and the original never
 // share a secret: a fresh REALITY key and short id (the target stays), a new Hysteria2
-// obfuscation password, VLESS Encryption key, Shadowsocks password, Sudoku key or Snell
-// PSK. Paths and the rest of the settings stay as they were.
+// obfuscation password, VLESS Encryption key, Shadowsocks password, Sudoku key, Snell
+// PSK or AmneziaWG server key. Paths and the rest of the settings stay as they were.
 func Rekey(t proto.Template) error {
 	if r, ok := t["reality-config"].(map[string]any); ok {
 		fresh, err := NewReality(DefaultDest)
@@ -302,6 +344,12 @@ func Rekey(t proto.Template) error {
 		t["key"] = secure.Token(32)
 	case "snell":
 		t["psk"] = secure.Token(32)
+	case "amneziawg":
+		key, err := newAWGKey()
+		if err != nil {
+			return err
+		}
+		t["server-key"] = key
 	}
 	return nil
 }

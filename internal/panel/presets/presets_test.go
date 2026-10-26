@@ -10,7 +10,7 @@ import (
 // A copy shares no secret with the original: every key a preset generates is new, the
 // rest of the settings stays.
 func TestRekey(t *testing.T) {
-	for _, id := range []string{"vless_reality_xhttp", PresetPQ, "hysteria2", "shadowsocks_2022", "sudoku", "snell", PresetTLSWS} {
+	for _, id := range []string{"vless_reality_xhttp", PresetPQ, "hysteria2", "shadowsocks_2022", "sudoku", "snell", "amneziawg", PresetTLSWS} {
 		src, err := NewConfig(id, "")
 		if err != nil {
 			t.Fatal(err)
@@ -24,7 +24,7 @@ func TestRekey(t *testing.T) {
 			t.Fatalf("%s: the copy is broken: %v", id, err)
 		}
 		changed := false
-		for _, k := range []string{"obfs-password", "password", "key", "psk", "decryption"} {
+		for _, k := range []string{"obfs-password", "password", "key", "psk", "decryption", "server-key"} {
 			if orig[k] != nil {
 				if orig[k] == cp[k] {
 					t.Fatalf("%s: %s kept", id, k)

@@ -3,8 +3,10 @@ package node
 import (
 	"encoding/json"
 
+	C "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/listener"
 
+	"mikan/internal/node/awg"
 	"mikan/internal/nodeapi"
 	"mikan/internal/proto"
 )
@@ -86,13 +88,17 @@ func speaksHTTP(l map[string]any) bool {
 // outbounds, is an error as before.
 func buildConfig(st nodeapi.DesiredState, cert proto.Cert, allowPrivate bool, front string) (raw []byte, rejected []nodeapi.ListenerStatus, err error) {
 	listeners := make([]map[string]any, 0, len(st.Inbounds)+1)
+	var awgs []map[string]any
 	keep := func(name string, l map[string]any, err error) {
 		if err == nil {
-			// The parser mihomo applies the config with; it opens nothing.
-			_, err = listener.ParseListener(l)
+			err = checkListener(l)
 		}
 		if err != nil {
 			rejected = append(rejected, nodeapi.ListenerStatus{Name: name, Error: err.Error()})
+			return
+		}
+		if isAWG(l) {
+			awgs = append(awgs, l)
 			return
 		}
 		listeners = append(listeners, l)
@@ -132,8 +138,43 @@ func buildConfig(st nodeapi.DesiredState, cert proto.Cert, allowPrivate bool, fr
 		"rules":             rules(st, allowPrivate),
 		"listeners":         listeners,
 	}
+	if len(awgs) > 0 {
+		cfg[awg.ConfigKey] = awgs
+	}
 	raw, err = json.Marshal(cfg)
 	return raw, rejected, err
+}
+
+func isAWG(l map[string]any) bool { return l["type"] == "amneziawg" }
+
+// checkListener parses l as it will be applied, opening nothing: with mihomo's own parser,
+// AmneziaWG (which the core has no listener of) with the node's.
+func checkListener(l map[string]any) error {
+	if isAWG(l) {
+		_, err := awg.Parse(l)
+		return err
+	}
+	_, err := listener.ParseListener(l)
+	return err
+}
+
+// awgListeners are the AmneziaWG listeners of a config buildConfig made.
+func awgListeners(raw []byte) (map[string]C.InboundListener, error) {
+	var cfg struct {
+		L []map[string]any `json:"mikan-amneziawg"`
+	}
+	if err := json.Unmarshal(raw, &cfg); err != nil {
+		return nil, err
+	}
+	out := make(map[string]C.InboundListener, len(cfg.L))
+	for _, l := range cfg.L {
+		c, err := awg.Parse(l)
+		if err != nil {
+			return nil, err
+		}
+		out[c.Name] = awg.New(c)
+	}
+	return out, nil
 }
 
 func listenerFor(in nodeapi.Inbound, slots []nodeapi.Slot, cert proto.Cert, o proto.Options) (map[string]any, error) {

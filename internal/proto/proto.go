@@ -85,7 +85,8 @@ var rules = map[string]rule{
 	"shadowsocks": {keys: []string{"cipher", "password"}, network: "tcp", shared: true},
 	"sudoku": {keys: []string{"key", "aead-method", "padding-min", "padding-max", "table-type", "handshake-timeout", "enable-pure-downlink", "httpmask"},
 		network: "tcp", shared: true},
-	"snell": {keys: []string{"psk", "version", "obfs-opts"}, network: "tcp", shared: true},
+	"snell":     {keys: []string{"psk", "version", "obfs-opts"}, network: "tcp", shared: true},
+	"amneziawg": {keys: []string{"server-key", "jc", "jmin", "jmax", "s1", "s2", "h1", "h2", "h3", "h4", "mtu", "subnet"}, network: "udp"},
 }
 
 // managed keys are set by the node; the rest of the forbidden list would let a template

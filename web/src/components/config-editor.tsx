@@ -24,6 +24,7 @@ const TOP: Record<string, string[]> = {
   shadowsocks: ["cipher", "password"],
   sudoku: ["key", "aead-method", "padding-min", "padding-max", "table-type", "httpmask"],
   snell: ["psk", "version", "obfs-opts"],
+  amneziawg: ["server-key", "jc", "jmin", "jmax", "s1", "s2", "h1", "h2", "h3", "h4", "mtu", "subnet"],
 };
 const NESTED: Record<string, string[]> = {
   "reality-config": [
