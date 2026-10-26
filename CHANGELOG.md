@@ -3,6 +3,14 @@
 Each release has a section in English and in Russian; the release workflow puts them in
 the signed manifest, and the panel shows the one in its language.
 
+## 0.5.2.2-rc.11
+### en
+- **No zoom on phones**: the subscription page, the Mini App and the admin panel no longer zoom in when a text field is tapped, nor by a pinch.
+- A test of the Xray JSON subscription end to end: Happ and other Xray apps get the auto-select config first when the setting is on, share links when it is off (off by default).
+### ru
+- **Без масштабирования на телефоне**: страница подписки, Mini App и панель управления больше не увеличиваются при нажатии на поле ввода и не масштабируются жестом.
+- Сквозной тест Xray-подписки: с включённой настройкой Happ и другие приложения на Xray первым получают конфиг автовыбора, с выключенной — обычные ссылки (по умолчанию выключена).
+
 ## 0.5.2.2-rc.10
 ### en
 - **Support tickets**: a client writes to support from the Mini App or the bot, the admin answers in the panel; the conversation, statuses and notifications on both sides.
