@@ -1,0 +1,38 @@
+---
+title: Support tickets
+description: Tickets — the client writes in the bot or the Mini App, the administrator answers from the panel.
+---
+
+The **Tickets** section in the panel menu. A client writes to support right in the bot or the Mini App, you answer from the panel, and the answer reaches the client in the bot. The whole conversation stays in the panel, with statuses and history.
+
+## Turning it on
+
+The **Support tickets** switch at the top of the section. While it is off, the "Support" button in the bot and the Mini App leads to the support link from the bot settings, as before. When it is on, the same button opens a conversation with you.
+
+For each new client message the bot writes to the administrator's alerts chat: who wrote, the ticket number and the start of the text. The chat is connected in **Telegram → Alerts to me → Private alerts**, see [Notifications](/mikan/en/operations/alerts/). Without the bot or the chat there is no notice, the tickets simply wait in the section.
+
+## What the client sees
+
+- **In the Mini App**: a "Support" screen with the list of tickets and the "New ticket", "Reply" and "Close ticket" buttons. Tickets with an unread answer are marked.
+- **In the bot**: after the "Support" button, the next message in the chat goes to support. This mode lasts an hour, then the bot reads messages as usual again. A picture can be sent through the bot; the Mini App takes text only.
+
+The administrator's answer reaches the client in the bot, and they can reply right there.
+
+## Statuses
+
+| Status | When |
+|---|---|
+| Waiting for answer | the client wrote last |
+| Answered | the administrator answered last |
+| Closed | closed by the client or the administrator |
+
+A new client message in a closed ticket opens it again. In the panel a ticket can be closed, reopened or deleted. Deleting erases the conversation for good, for the client too.
+
+The list in the panel is filtered by status, and each ticket shows where it came from: the bot or the Mini App.
+
+## Limits
+
+- At most 5 open tickets per client: to start a sixth, one of the old ones has to be closed.
+- A message is up to 4000 characters. The ticket's subject is the first line of its first message.
+- A client sees their last 30 tickets.
+- Only a Telegram account can write to support: tickets belong to it, not to a subscription.

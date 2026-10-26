@@ -1,0 +1,35 @@
+---
+title: Referral program
+description: A personal link to the bot, bonus days for the inviter on a friend's first payment.
+---
+
+The **Referrals** section in the panel menu. Every client has their own link to the bot. When a friend they invited pays for a plan for the first time, days are added to the inviter's subscription.
+
+## Turning it on
+
+- **Referral program**: the switch at the top of the section. When it is on, the bot and the Mini App get an "Invite a friend" button.
+- **Bonus to the inviter, days**: from 1 to 365, 7 by default. A new value applies to the next payments; days already given do not change.
+
+The links work only while the bot is running: they lead to it.
+
+## What the client sees
+
+An "Invite a friend" screen in the bot and the Mini App: a personal link like `https://t.me/<bot>?start=r_<code>`, the "Share" and "Copy" buttons, a QR code of the link and the numbers: how many friends came, how many paid and how many days were earned.
+
+When a friend pays, the bot tells the inviter about the bonus. If the inviter has no subscription, the days wait: they are added to the first subscription the inviter buys, and the screen shows how many days are waiting.
+
+## Who counts as a friend
+
+A friend counts only if they came by the link as a new client: without a subscription and without payments. These do not count:
+
+- one's own code;
+- a client who has already bought a subscription;
+- a client already invited by someone else (the first link wins).
+
+Only the friend's **first plan payment** gives the bonus. Renewals, traffic packages, the trial and promo codes do not.
+
+## Numbers in the panel
+
+- Totals: how many came by the links, how many paid, how many days were given and how many wait for a subscription, how many clients invited someone.
+- **Top inviters**: those with the most friends who paid.
+- **Recent invitations**: the friend, who invited them, when they came and the status: "Not paid", "Paid · +N days" or "Paid · N days waiting".

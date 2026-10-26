@@ -1,0 +1,38 @@
+---
+title: Auto-select in Happ and Xray
+description: An auto-select group of the fastest server for Happ, v2RayTun, v2rayNG and INCY through Xray configs.
+---
+
+Clash apps have an auto-select group: the app keeps the fastest working server by itself. Xray apps (Happ, v2RayTun, v2rayNG, INCY) cannot do that with plain links, and the user picks a server by hand. This mode gives them the subscription as whole Xray configs, with the same kind of auto-select group first in the list.
+
+:::caution[Not tested on real apps]
+The format follows the Xray documentation and is covered by the panel's tests, but it has not been tried in real Happ and v2RayTun yet. Turn the mode on, check the subscription on your own device, and only then leave it on for everyone.
+:::
+
+## Turning it on
+
+The **Auto-select in Happ and Xray apps** switch in the **Happ** card in **Settings → Subscription**. It is off by default: the apps get plain links, as before.
+
+The group's name comes from the **Auto select** field in the "Profile in the apps" card on the same page, the same as for Clash apps.
+
+Without the switch, this subscription can be requested by hand by adding `?format=xray` (or `?format=json`) to the link: handy for checking it on one device.
+
+## What the user sees
+
+The server list in the app:
+
+1. **The auto-select group** under its name. It holds all the servers; every 5 minutes Xray checks each one with a request to `https://www.gstatic.com/generate_204` and sends traffic through the fastest one that answered. Until the first check, or when none answers, the first server is used.
+2. Then each server on its own, under its name, in case the user wants to pick one.
+
+## Routing
+
+The rules are built into each config from the subscription profile's rules, the same ones Clash apps get (see [Routing](/mikan/en/subscriptions/routing/)). Sites and IPs are sorted in Happ's order: blocked first, then through the proxy, then direct. Local networks always go direct, and the profile's MATCH rule decides the rest.
+
+The app's own routing does not apply to these configs: the panel's rules do.
+
+## Limits
+
+- Only VLESS, Trojan and Shadowsocks go into the configs. Hysteria 2, TUIC, AnyTLS and [AmneziaWG](/mikan/en/protocols/amneziawg/) do not: the app will not get those servers in this mode. If a user has no suitable server at all, they get plain links.
+- v2rayN does not get this format, except with `?format=xray`.
+- Xray routing is simpler than Clash: no per-service groups, no process rules and no rule sets beyond the panel's built-in lists.
+- The config sets its own local ports (SOCKS 10808, HTTP 10809) and DNS 1.1.1.1 and 8.8.8.8.

@@ -1,0 +1,37 @@
+---
+title: AmneziaWG
+description: WireGuard with a handshake hidden from DPI, client keys, settings and limits.
+---
+
+AmneziaWG is WireGuard that hides its handshake from DPI: it sends junk packets before it, pads the handshake messages with random bytes and uses its own message types instead of the standard ones. Plain WireGuard is easy to spot and block in Russia; AmneziaWG is made for exactly that.
+
+## Turning it on
+
+**Protocols → Add → AmneziaWG**, then pick a node. The default port is 51820/udp, and it can be changed. The panel makes the server key and random obfuscation settings itself; nothing else needs setting up. Open this UDP port in the node's firewall if it is closed.
+
+Each user gets their own key and their own address in the internal network (the server is `10.64.0.1`, clients are `10.64.0.3` and on). The keys are not stored but derived from the user's secret, so a new user connects without a node restart and nobody else reconnects.
+
+## Settings
+
+They are in the connection's template; usually there is no need to change them:
+
+| Key | What it is | Allowed |
+|---|---|---|
+| `server-key` | the server's WireGuard private key | 32 bytes in base64 |
+| `jc`, `jmin`, `jmax` | the number of junk packets and their size | `jc` 0–128, `jmin` ≤ `jmax`, `jmax` up to 1280 |
+| `s1`, `s2` | padding of the handshake messages | up to 1132, with `s1 + 56 ≠ s2` |
+| `h1`–`h4` | own message types | different, from 5 |
+| `mtu` | tunnel MTU | 1280–1500, 1420 by default |
+| `subnet` | the clients' internal network | IPv4 from /8 to /24, `10.64.0.0/10` by default; it must have addresses for everyone |
+
+If a value is out of range, the panel does not save the connection and shows what is wrong. The obfuscation settings are shared by the server and the clients: after changing them, clients need to update the subscription. When a connection is copied, the copy gets a new server key.
+
+## What the user sees
+
+The server appears in the subscription like any other, labeled AmneziaWG. The user does not need to install the AmneziaVPN app or import a config: everything comes in the subscription profile.
+
+## Limits
+
+- **mihomo-based apps only** (Clash apps), mihomo 1.19.0 or newer. AmneziaWG has no share link, so this server does not reach Happ, v2RayTun, v2rayNG and other Xray apps, including the [Xray auto-select](/mikan/en/subscriptions/xray-auto/).
+- It is UDP: where the ISP cuts UDP, AmneziaWG will not help, a TCP protocol is needed.
+- The node runs the tunnel itself, in user space. On weak nodes with heavy traffic this shows more than with the core's own protocols.

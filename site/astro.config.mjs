@@ -83,6 +83,7 @@ export default defineConfig({
 						{ slug: 'nodes/hardening' },
 						{ slug: 'nodes/cascades' },
 						{ slug: 'nodes/warp' },
+						{ slug: 'nodes/status-page' },
 					],
 				},
 				{
@@ -94,6 +95,7 @@ export default defineConfig({
 						{ slug: 'protocols/autotune' },
 						{ slug: 'protocols/behind-proxy' },
 						{ slug: 'protocols/xhttp-masking' },
+						{ slug: 'protocols/amneziawg' },
 					],
 				},
 				{
@@ -103,6 +105,7 @@ export default defineConfig({
 						{ slug: 'subscriptions/page' },
 						{ slug: 'subscriptions/domain' },
 						{ slug: 'subscriptions/happ' },
+						{ slug: 'subscriptions/xray-auto' },
 						{ slug: 'subscriptions/routing' },
 					],
 				},
@@ -117,6 +120,7 @@ export default defineConfig({
 						{ slug: 'billing/balance' },
 						{ slug: 'billing/campaigns' },
 						{ slug: 'billing/promo-codes' },
+						{ slug: 'billing/referrals' },
 					],
 				},
 				{
@@ -127,6 +131,7 @@ export default defineConfig({
 						{ slug: 'operations/backups' },
 						{ slug: 'operations/import' },
 						{ slug: 'operations/alerts' },
+						{ slug: 'operations/tickets' },
 						{ slug: 'operations/diagnostics' },
 						{ slug: 'operations/filters' },
 						{ slug: 'operations/front-page' },

@@ -1,0 +1,42 @@
+---
+title: Status page
+description: A public page — whether the servers work right now and their daily uptime.
+---
+
+A public page where clients see for themselves whether the servers work and how they worked over the last days. It opens at `<subscription address>/status`, for example `https://sub.example.com/status`.
+
+## Turning it on
+
+The **Status page** card in **Settings → Subscription**:
+
+- **Show the page**: while it is off, the address returns 404.
+- **Title**: up to 80 characters. Empty means "Server status" in the visitor's language.
+- **Days to show**: 30, 60 or 90, 90 by default.
+
+The card has a preview and the "Open" and "Copy address" buttons.
+
+## Which servers are on the page
+
+Only enabled nodes with a **public name**. It is set in the node card, in the "Name in status channel" field, for example `🇩🇪 Germany`. Visitors see this name: addresses, IPs and internal node names do not reach the page. A node without a public name is not shown.
+
+## What the visitor sees
+
+At the top, a summary: all servers are up, some are down, or all are down. Below it, for each server:
+
+- the state right now: "Up", "Down" or "No data";
+- the uptime over the chosen period, in percent;
+- a bar per day: the day's color shows the share of checks the node passed. A day without checks is marked "no data".
+
+The page is in Russian or English by the browser's language; if the browser does not say, in the panel's language. With `?format=json` the same address returns JSON for your own widgets and monitoring.
+
+## Where the uptime comes from
+
+The panel already checks its connection to the nodes regularly. Since this version it counts, for each day (UTC), how many checks there were and how many the node passed: that share is the day's uptime. The counters are written to the database about once a minute, and the days are kept for 100 days.
+
+## Limits
+
+- The history starts with the update: days before it show as "no data".
+- Uptime is the panel's connection to the node, not reachability from a client's network. If only the clients of some ISP are blocked, the page will not see it.
+- While the panel is down there are no checks, and those hours do not count.
+- The data on the page refreshes at most once every 30 seconds.
+- Anyone who knows the address can open the page: do not give nodes public names you do not want to show.
