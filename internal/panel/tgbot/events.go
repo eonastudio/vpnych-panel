@@ -20,7 +20,7 @@ import (
 // EventTypes are the events HandleEvent acts on.
 var EventTypes = []string{events.PaymentPaid, events.PaymentRefunded, events.TrialNotGiven,
 	events.UserExpiring, events.UserExpired, events.Traffic90, events.Traffic100, events.BalanceTopup,
-	events.TicketReply, events.TicketClosed}
+	events.TicketReply, events.TicketClosed, events.ReferralReward}
 
 // gone: the subscription of a payment is not there for the bot any more: deleted, or moved to
 // an account that is not talking to it. Retrying would not change that.
@@ -65,6 +65,12 @@ func (b *Bot) HandleEvent(ctx context.Context, e events.Event) error {
 		if t, ok := ticketOf(e); ok {
 			b.ticketEvent(ctx, e.TgID, e.Type, t)
 		}
+	case events.ReferralReward:
+		var r events.Reward
+		if err := json.Unmarshal(e.Data, &r); err != nil || e.TgID == 0 || r.Days < 1 {
+			return nil
+		}
+		b.rewarded(ctx, e.TgID, r)
 	case events.TrialNotGiven:
 		var n events.NotGiven
 		if err := json.Unmarshal(e.Data, &n); err != nil || e.TgID == 0 {

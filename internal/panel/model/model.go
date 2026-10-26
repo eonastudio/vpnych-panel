@@ -182,6 +182,22 @@ type TicketMessage struct {
 	CreatedAt int64  `json:"CreatedAt"`
 }
 
+// ReferralPrefix starts the bot's /start code of an account's referral link.
+const ReferralPrefix = "r_"
+
+// Referral is an account's referral program: its link and how its friends did. Days: what a
+// friend's first paid tariff gives; Earned: days given so far; Waiting: days that wait for a
+// subscription of the account.
+type Referral struct {
+	Enabled bool   `json:"Enabled"`
+	Link    string `json:"Link"`
+	Days    int64  `json:"Days"`
+	Invited int64  `json:"Invited"`
+	Paid    int64  `json:"Paid"`
+	Earned  int64  `json:"Earned"`
+	Waiting int64  `json:"Waiting"`
+}
+
 // BalanceOp is one change of an account's balance.
 type BalanceOp struct {
 	ID        int64         `json:"ID"`

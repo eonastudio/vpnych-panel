@@ -35,6 +35,8 @@ const (
 
 	TicketReply  = "ticket.reply"
 	TicketClosed = "ticket.closed"
+
+	ReferralReward = "referral.reward"
 )
 
 // Payment is the data of PaymentPaid and PaymentRefunded: enough to thank, notify or count,
@@ -160,6 +162,19 @@ type Ticket struct {
 	Text     string `json:"text,omitempty"`
 }
 
+// Reward is the data of ReferralReward: a friend of the account (the envelope's tg_id) paid for
+// its first tariff. Days went to the envelope's subscription; Waiting: the account has no
+// subscription, the days wait for the first one it buys. Friends: of the account's friends,
+// how many paid so far.
+type Reward struct {
+	Days    int64 `json:"days"`
+	Waiting bool  `json:"waiting,omitempty"`
+	Friends int64 `json:"friends"`
+	// Collected: the days are the account's own that waited, given to the subscription it
+	// just bought.
+	Collected bool `json:"collected,omitempty"`
+}
+
 // Doc describes one event type for the protocol's documentation: Data is an example of its
 // data as it goes on the wire.
 type Doc struct {
@@ -193,4 +208,5 @@ var Docs = []Doc{
 	{BalanceTopup, "The admin approved or rejected a top-up of an account's balance.", Topup{TopupID: 5, Status: "approved", Amount: 50000, Currency: "RUB", Balance: 65000}},
 	{TicketReply, "The admin answered a support ticket of the account.", Ticket{TicketID: 12, Subject: "No connection", Text: "Update the subscription, please."}},
 	{TicketClosed, "The admin closed a support ticket of the account.", Ticket{TicketID: 12, Subject: "No connection"}},
+	{ReferralReward, "A friend the account invited paid for its first tariff: the account got days, or they wait for its first subscription.", Reward{Days: 7, Friends: 3}},
 }

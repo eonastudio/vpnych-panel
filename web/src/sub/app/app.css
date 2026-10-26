@@ -442,3 +442,10 @@ a.btn { text-decoration: none; }
 .ticket-msg .muted { font-size: 14px; margin-bottom: 4px; }
 .ticket-msg p { margin: 0; font-size: 17px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
 textarea.input { resize: vertical; min-height: 120px; font: inherit; }
+
+/* The referral screen: the link's buttons and the friends' numbers. */
+.ref-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.ref-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0 0; }
+.ref-stats div { padding: 16px; border-radius: 22px; background: var(--input); text-align: center; }
+.ref-stats dt { font-size: 14px; color: var(--text-2); }
+.ref-stats dd { margin: 6px 0 0; font-size: 26px; font-weight: 700; }

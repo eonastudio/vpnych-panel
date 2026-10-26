@@ -37,7 +37,8 @@
     "addons": "Addons",
     "payments": "Payments",
     "diagnostics": "Diagnostics",
-    "tickets": "Tickets"
+    "tickets": "Tickets",
+    "referrals": "Referrals"
   },
   "navShort": {
     "overview": "Overview",
@@ -49,7 +50,8 @@
     "addons": "Addons",
     "payments": "Payments",
     "diagnostics": "Diagnostics",
-    "tickets": "Tickets"
+    "tickets": "Tickets",
+    "referrals": "Referrals"
   },
   "shell": {
     "update": "{v} is out",
@@ -607,7 +609,8 @@
       "ticket_gone": "Ticket not found",
       "ticket_many": "Too many open tickets",
       "ticket_empty": "Write the message text",
-      "ticket_off": "Support tickets are off"
+      "ticket_off": "Support tickets are off",
+      "bad_referral_days": "The bonus is 1 to 365 days"
     },
     "acme": {
       "port80_busy": "Port 80 is held by another program, and the certificate authority checks the server through it. If it is nginx or Caddy, the command below lets the check through to ВПНыч; otherwise free the port",
@@ -2716,7 +2719,28 @@
         "open": "waiting",
         "answered": "answered",
         "closed": "closed"
-      }
+      },
+      "refTitle": "Invite a friend",
+      "refRowText": "+{n} days for every friend who pays",
+      "refTop": "Invite",
+      "refBottom": "friends",
+      "refHint": "Send a friend your link to the bot. When they pay for a subscription for the first time, {n} days are added to yours.",
+      "refLink": "Your link",
+      "refShare": "Share",
+      "refCopy": "Copy",
+      "refShareText": "Join the VPN with my link",
+      "refNoLink": "The link shows once the bot is running.",
+      "refStats": "Your friends",
+      "refInvited": "Came",
+      "refPaid": "Paid",
+      "refEarned": "Earned",
+      "refDays": "{n} days",
+      "refWaiting": "{n} more days wait for your subscription: they are added as soon as you buy one.",
+      "refQR": "QR code of the link",
+      "refNote": "Only new users who have never bought a subscription count.",
+      "refOff": "The referral program is off now.",
+      "refFailed": "Could not load it, try again later.",
+      "refLoading": "Loading"
     }
   },
   "nodes": {
@@ -4947,5 +4971,31 @@
     "deleted": "Ticket deleted",
     "deleteTitle": "Delete the ticket?",
     "deleteText": "The conversation is deleted for good, for the client too."
+  },
+  "referrals": {
+    "title": "Referral program",
+    "sub": "Clients invite friends by their own link and get days on their subscription when a friend pays for the first time",
+    "enabled": "Referral program",
+    "enabledSub": "The “Invite a friend” button in the bot and the Mini App",
+    "days": "Bonus to the referrer, days",
+    "daysHint": "Added to the subscription for a friend's first payment. Without a subscription it waits until one is bought.",
+    "save": "Save",
+    "saved": "Saved",
+    "invited": "Came by links",
+    "paid": "Paid",
+    "earned": "Days given",
+    "waiting": "Days waiting",
+    "referrers": "Referrers",
+    "top": "Top referrers",
+    "recent": "Latest invitations",
+    "friend": "Friend",
+    "referrer": "Invited by",
+    "when": "Came",
+    "status": "Status",
+    "statusNew": "Not paid",
+    "statusPaid": "Paid · +{n} days",
+    "statusWaiting": "Paid · {n} days waiting",
+    "empty": "Nobody has come by a link yet",
+    "emptyText": "Turn the program on: clients get the “Invite a friend” button."
   }
 }

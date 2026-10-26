@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Menu from "@radix-ui/react-dropdown-menu";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Activity, ArrowUpCircle, LayoutDashboard, LogOut, MessagesSquare, MoreHorizontal, Network, PanelLeftClose, PanelLeftOpen, Puzzle, Server, SlidersHorizontal, Tag, Users, Wallet } from "lucide-react";
+import { Activity, ArrowUpCircle, Gift, LayoutDashboard, LogOut, MessagesSquare, MoreHorizontal, Network, PanelLeftClose, PanelLeftOpen, Puzzle, Server, SlidersHorizontal, Tag, Users, Wallet } from "lucide-react";
 import { useState } from "react";
 import { api, ApiError, errorText, unwrap } from "../api/client";
 import { meQuery, useNode, useOverview, useUpdates } from "../api/hooks";
@@ -22,6 +22,7 @@ const NAV = [
   { to: "/nodes", key: "nodes", icon: Network },
   { to: "/payments", key: "payments", icon: Wallet },
   { to: "/tickets", key: "tickets", icon: MessagesSquare },
+  { to: "/referrals", key: "referrals", icon: Gift },
   { to: "/addons", key: "addons", icon: Puzzle },
   { to: "/diagnostics", key: "diagnostics", icon: Activity },
   { to: "/settings", key: "settings", icon: SlidersHorizontal },

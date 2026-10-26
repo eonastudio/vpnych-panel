@@ -40,6 +40,7 @@ import (
 	"mikan/internal/panel/panelimport"
 	"mikan/internal/panel/promo"
 	"mikan/internal/panel/reach"
+	"mikan/internal/panel/referral"
 	"mikan/internal/panel/server"
 	"mikan/internal/panel/settings"
 	"mikan/internal/panel/store"
@@ -78,7 +79,9 @@ type Panel struct {
 	// Support keeps the support access grants; the operator's terminal hooks into it.
 	Support *support.Service
 	// Tickets is support by tickets: the clients write in the bot or the Mini App.
-	Tickets   *tickets.Service
+	Tickets *tickets.Service
+	// Referral is the referral program: the accounts' links and the friends' rewards.
+	Referral  *referral.Service
 	Addons    *addons.Manager
 	AddonsAPI *panelapi.Server
 	server    *server.Server
@@ -287,9 +290,17 @@ func NewPanel(st *store.Store, o Options) (*Panel, error) {
 	deps.Logs, deps.Host = o.Logs, hostchan.New(o.DataDir)
 	promos := promo.New(st, o.Now)
 	promos.Changed = deps.Users.Changed
+	// The links are made with the bot's address, which the gateway made below knows.
+	p.Referral = referral.New(st, set, deps.Users, o.Now, func(ctx context.Context) string {
+		if p.Gateway == nil {
+			return ""
+		}
+		return p.Gateway.BotURL(ctx)
+	})
+	deps.Referral = p.Referral
 	p.Billing = billing.New(billing.Deps{Store: st, Settings: set, Users: deps.Users, Log: o.Log, Now: o.Now, TrustProxy: o.TrustProxy,
 		MaxLinks: model.MaxLinks,
-		Addons:   deps.Addons, SubBase: subBase, Promo: promos, Events: hub,
+		Addons:   deps.Addons, SubBase: subBase, Promo: promos, Events: hub, Referral: p.Referral,
 		TopupWaiting: func(ctx context.Context, t db.Topup) { p.tellAdminOfTopup(ctx, t) }})
 	deps.Billing, deps.SubBase = p.Billing, subBase
 	// The bot may reach Telegram through a node when the panel's server cannot.
@@ -302,7 +313,7 @@ func NewPanel(st *store.Store, o Options) (*Panel, error) {
 	// answers their calls (botpanel.RPCHandler).
 	p.Tickets = tickets.New(st, set, o.Now, hub)
 	deps.Tickets = p.Tickets
-	backend := &botpanel.Local{Store: st, Settings: set, Binder: deps.Devices, Users: deps.Users, Billing: p.Billing, Gateway: p.Gateway, SubBase: subBase, Now: o.Now, Desk: p.Tickets,
+	backend := &botpanel.Local{Store: st, Settings: set, Binder: deps.Devices, Users: deps.Users, Billing: p.Billing, Gateway: p.Gateway, SubBase: subBase, Now: o.Now, Desk: p.Tickets, Referrals: p.Referral,
 		// Telegram apps refuse a Mini App on a self-signed certificate.
 		MiniApp: func() bool { return o.Certs != nil && o.Certs.Trusted() }}
 	// The panel's API for addons, with the Bot API proxy over the gateway for the addon that
@@ -530,6 +541,7 @@ func NewPanel(st *store.Store, o Options) (*Panel, error) {
 	subHandler.SetShop(p.Billing)
 	subHandler.SetPromo(promos)
 	subHandler.SetTickets(p.Tickets)
+	subHandler.SetReferral(p.Referral)
 	subHandler.SetPages(pages)
 
 	adminMux := http.NewServeMux()

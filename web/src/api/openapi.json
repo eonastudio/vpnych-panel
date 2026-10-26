@@ -7533,6 +7533,178 @@
         ],
         "type": "object"
       },
+      "ReferralSettingsView": {
+        "additionalProperties": false,
+        "properties": {
+          "days": {
+            "description": "Дней к подписке пригласившего за первую оплату друга",
+            "format": "int64",
+            "maximum": 365,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "enabled": {
+            "description": "У клиентов есть ссылка-приглашение в боте и Mini App",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled",
+          "days"
+        ],
+        "type": "object"
+      },
+      "ReferralTotalsView": {
+        "additionalProperties": false,
+        "properties": {
+          "earned": {
+            "description": "Дней начислено пригласившим",
+            "format": "int64",
+            "type": "integer"
+          },
+          "invited": {
+            "description": "Пришли по ссылкам",
+            "format": "int64",
+            "type": "integer"
+          },
+          "paid": {
+            "description": "Из них оплатили",
+            "format": "int64",
+            "type": "integer"
+          },
+          "referrers": {
+            "description": "Сколько клиентов приглашали",
+            "format": "int64",
+            "type": "integer"
+          },
+          "waiting": {
+            "description": "Дней ждут, пока у пригласившего появится подписка",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "invited",
+          "paid",
+          "earned",
+          "waiting",
+          "referrers"
+        ],
+        "type": "object"
+      },
+      "ReferralView": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "days": {
+            "description": "Начислено или ждёт пригласившего; 0 — друг ещё не платил",
+            "format": "int64",
+            "type": "integer"
+          },
+          "paid_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "referrer_id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "referrer_name": {
+            "type": "string"
+          },
+          "referrer_username": {
+            "type": "string"
+          },
+          "rewarded_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "tg_id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "tg_name": {
+            "type": "string"
+          },
+          "tg_username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tg_id",
+          "referrer_id",
+          "created_at",
+          "days"
+        ],
+        "type": "object"
+      },
+      "ReferralsOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/ReferralView"
+            },
+            "type": "array"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/ReferralSettingsView"
+          },
+          "top": {
+            "items": {
+              "$ref": "#/components/schemas/ReferrerView"
+            },
+            "type": "array"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ReferralTotalsView"
+          }
+        },
+        "required": [
+          "settings",
+          "totals",
+          "top",
+          "recent"
+        ],
+        "type": "object"
+      },
+      "ReferrerView": {
+        "additionalProperties": false,
+        "properties": {
+          "earned": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "invited": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "paid": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "tg_id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "tg_name": {
+            "type": "string"
+          },
+          "tg_username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tg_id",
+          "invited",
+          "paid",
+          "earned"
+        ],
+        "type": "object"
+      },
       "Refused": {
         "additionalProperties": false,
         "properties": {
@@ -16530,6 +16702,108 @@
         "tags": [
           "promocodes"
         ]
+      }
+    },
+    "/api/v1/referrals": {
+      "get": {
+        "operationId": "list-referrals",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferralsOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Реферальная программа: итоги и приглашения",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/v1/referrals/settings": {
+      "get": {
+        "operationId": "get-referral-settings",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferralSettingsView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Настройки реферальной программы",
+        "tags": [
+          "users"
+        ]
+      },
+      "put": {
+        "operationId": "update-referral-settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferralSettingsView"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferralSettingsView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Изменить реферальную программу",
+        "tags": [
+          "users"
+        ],
+        "x-session-only": true
       }
     },
     "/api/v1/settings": {

@@ -70,6 +70,9 @@ var botRPC = map[string]rpcRule{
 	"SetTicketCompose": rule("users:write", []int{0}, nil),
 	"PostTicket":       rule("users:write", []int{0}, nil),
 	"CloseTicket":      rule("users:write", []int{0}, nil),
+	// The referral program: the account's own link and friends.
+	"Referral":    rule("users:read", []int{0}, nil),
+	"TagReferral": rule("users:write", []int{0}, nil),
 	// The shop: what is on offer, and what makes a payment or a subscription.
 	"Shop.Config": rule("", nil, nil), "Shop.Offers": rule("", nil, nil), "Shop.AddonName": rule("", nil, nil),
 	"Shop.TrialTariff":    rule("", nil, nil),

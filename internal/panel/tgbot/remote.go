@@ -228,6 +228,18 @@ func (r *Remote) CloseTicket(ctx context.Context, tgID, id int64) error {
 	return r.call(ctx, "CloseTicket", []any{tgID, id})
 }
 
+func (r *Remote) Referral(ctx context.Context, tgID int64) (model.Referral, error) {
+	var ref model.Referral
+	err := r.call(ctx, "Referral", []any{tgID}, &ref)
+	return ref, err
+}
+
+func (r *Remote) TagReferral(ctx context.Context, tgID int64, code string) (bool, error) {
+	var tagged bool
+	err := r.call(ctx, "TagReferral", []any{tgID, code}, &tagged)
+	return tagged, err
+}
+
 // remoteShop is Shop over the Panel API ("Shop.<method>").
 type remoteShop struct{ r *Remote }
 

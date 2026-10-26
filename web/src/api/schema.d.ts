@@ -1585,6 +1585,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/referrals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Реферальная программа: итоги и приглашения */
+        get: operations["list-referrals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/referrals/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Настройки реферальной программы */
+        get: operations["get-referral-settings"];
+        /** Изменить реферальную программу */
+        put: operations["update-referral-settings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/settings": {
         parameters: {
             query?: never;
@@ -5668,6 +5703,81 @@ export interface components {
              * @description Сколько клиентов распределится заново при следующем обновлении подписки
              */
             moved: number;
+        };
+        ReferralSettingsView: {
+            /**
+             * Format: int64
+             * @description Дней к подписке пригласившего за первую оплату друга
+             */
+            days: number;
+            /** @description У клиентов есть ссылка-приглашение в боте и Mini App */
+            enabled: boolean;
+        };
+        ReferralTotalsView: {
+            /**
+             * Format: int64
+             * @description Дней начислено пригласившим
+             */
+            earned: number;
+            /**
+             * Format: int64
+             * @description Пришли по ссылкам
+             */
+            invited: number;
+            /**
+             * Format: int64
+             * @description Из них оплатили
+             */
+            paid: number;
+            /**
+             * Format: int64
+             * @description Сколько клиентов приглашали
+             */
+            referrers: number;
+            /**
+             * Format: int64
+             * @description Дней ждут, пока у пригласившего появится подписка
+             */
+            waiting: number;
+        };
+        ReferralView: {
+            /** Format: date-time */
+            created_at: string;
+            /**
+             * Format: int64
+             * @description Начислено или ждёт пригласившего; 0 — друг ещё не платил
+             */
+            days: number;
+            /** Format: date-time */
+            paid_at?: string;
+            /** Format: int64 */
+            referrer_id: number;
+            referrer_name?: string;
+            referrer_username?: string;
+            /** Format: date-time */
+            rewarded_at?: string;
+            /** Format: int64 */
+            tg_id: number;
+            tg_name?: string;
+            tg_username?: string;
+        };
+        ReferralsOutputBody: {
+            recent: components["schemas"]["ReferralView"][];
+            settings: components["schemas"]["ReferralSettingsView"];
+            top: components["schemas"]["ReferrerView"][];
+            totals: components["schemas"]["ReferralTotalsView"];
+        };
+        ReferrerView: {
+            /** Format: int64 */
+            earned: number;
+            /** Format: int64 */
+            invited: number;
+            /** Format: int64 */
+            paid: number;
+            /** Format: int64 */
+            tg_id: number;
+            tg_name?: string;
+            tg_username?: string;
         };
         Refused: {
             /** Format: int64 */
@@ -10825,6 +10935,97 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PromoCodeView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "list-referrals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferralsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-referral-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferralSettingsView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "update-referral-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReferralSettingsView"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferralSettingsView"];
                 };
             };
             /** @description Error */

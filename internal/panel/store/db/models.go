@@ -418,6 +418,23 @@ type PromoRedemption struct {
 	Note            string
 }
 
+type Referral struct {
+	TgID       int64
+	Referrer   int64
+	CreatedAt  int64
+	PaymentID  sql.NullInt64
+	PaidAt     sql.NullInt64
+	Days       int32
+	UserID     sql.NullInt64
+	RewardedAt sql.NullInt64
+}
+
+type ReferralCode struct {
+	TgID      int64
+	Code      string
+	CreatedAt int64
+}
+
 type RelayUser struct {
 	ExitNodeID int64
 	SrcNodeID  int64

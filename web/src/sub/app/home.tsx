@@ -19,6 +19,7 @@ import {
   IconChevronDown,
   IconDevices,
   IconDots,
+  IconGift,
   IconHeadphones,
   IconHelp,
   IconLayers,
@@ -32,6 +33,7 @@ import {
   PlatformIcon,
 } from "./icons";
 import { usePromo } from "./promo";
+import { useReferral } from "./referral";
 import { useSupport } from "./support";
 import { useInfo, useStore, type ShopKind } from "./store";
 import { Avatar, Button, Card, Footnote, haptic, Sheet, Title } from "./ui";
@@ -554,10 +556,13 @@ function HelpCard() {
   const { info, page, push, subURL } = useStore();
   const docs = page.docs.length > 0 && !!subURL;
   const support = useSupport();
-  if (!support && !docs) return null;
+  const referral = useReferral();
+  const invite = !!referral?.Enabled;
+  if (!support && !docs && !invite) return null;
   const rows = [
     docs ? { key: "docs", icon: <IconBook size={28} />, title: t("sub.docs"), text: t("sub.app.helpDocsText"), go: () => push({ name: "docs" }) } : null,
     support ? { key: "support", icon: <IconHeadphones size={28} />, title: t("sub.support"), text: t("sub.app.helpSupportText"), go: support } : null,
+    invite ? { key: "referral", icon: <IconGift size={28} />, title: t("sub.app.refTitle"), text: t("sub.app.refRowText", { n: referral.Days }), go: () => push({ name: "referral" }) } : null,
     info?.reissue ? { key: "reissue", icon: <IconRefresh size={28} />, title: t("sub.reissueTitle"), text: t("sub.app.helpReissueText"), go: () => push({ name: "reissue" }) } : null,
   ].filter((r) => r !== null);
   return (

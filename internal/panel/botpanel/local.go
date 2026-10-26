@@ -16,6 +16,7 @@ import (
 	"mikan/internal/panel/domain"
 	"mikan/internal/panel/model"
 	"mikan/internal/panel/panelimport"
+	"mikan/internal/panel/referral"
 	"mikan/internal/panel/settings"
 	"mikan/internal/panel/store"
 	"mikan/internal/panel/store/db"
@@ -60,6 +61,8 @@ type Local struct {
 	Now     func() time.Time
 	// Desk is support by tickets; nil: off.
 	Desk *tickets.Service
+	// Referral is the referral program; nil: off.
+	Referrals *referral.Service
 }
 
 var _ Backend = (*Local)(nil)

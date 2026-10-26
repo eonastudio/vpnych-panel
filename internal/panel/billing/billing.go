@@ -128,6 +128,11 @@ type Deps struct {
 	// Events wakes the addons reading the feed after a payment, a trial or a refund; nil: no
 	// one waits (the events are written all the same).
 	Events *events.Hub
+	// Referral hears of each applied tariff payment on its transaction (referral.Service.Paid):
+	// a friend's first one rewards its referrer; nil: no referral program.
+	Referral interface {
+		Paid(ctx context.Context, q *db.Queries, pay db.Payment, userID int64) error
+	}
 }
 
 type Service struct {
@@ -970,6 +975,11 @@ func (s *Service) Apply(ctx context.Context, id int64) error {
 		}
 		if s.d.Promo != nil {
 			if err := s.d.Promo.ApplyPayment(ctx, q, id, u.ID); err != nil {
+				return err
+			}
+		}
+		if s.d.Referral != nil {
+			if err := s.d.Referral.Paid(ctx, q, pay, u.ID); err != nil {
 				return err
 			}
 		}

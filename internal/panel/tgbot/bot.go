@@ -113,6 +113,12 @@ func (b *Bot) onMessage(ctx context.Context, m *tgapi.Message) {
 		if _, err := b.d.Backend.TagCampaign(ctx, chat, code); err != nil {
 			b.d.Log.Warn("telegram: campaign", "err", err)
 		}
+	case strings.HasPrefix(text, "/start "+model.ReferralPrefix):
+		// A friend's link: the account becomes the friend's, the menu greets it as usual.
+		code := strings.TrimSpace(strings.TrimPrefix(text, "/start "+model.ReferralPrefix))
+		if _, err := b.d.Backend.TagReferral(ctx, chat, code); err != nil {
+			b.d.Log.Warn("telegram: referral", "err", err)
+		}
 	case strings.HasPrefix(text, "/start "):
 		notice = b.linkByCode(ctx, w, chat, who(m.From), strings.TrimSpace(strings.TrimPrefix(text, "/start ")))
 	default:

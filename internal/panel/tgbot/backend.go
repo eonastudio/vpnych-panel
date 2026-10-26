@@ -103,6 +103,13 @@ type Backend interface {
 	PostTicket(ctx context.Context, tgID, id int64, text, photo string) (model.Ticket, error)
 	// CloseTicket is the account closing its ticket.
 	CloseTicket(ctx context.Context, tgID, id int64) error
+
+	// Referral is the account's referral program: its link and its friends (Enabled false
+	// while the admin keeps it off).
+	Referral(ctx context.Context, tgID int64) (model.Referral, error)
+	// TagReferral makes the account the friend of a referral code's owner when it starts the
+	// bot by that link with no subscription and no payment yet.
+	TagReferral(ctx context.Context, tgID int64, code string) (bool, error)
 }
 
 // Shop is the panel's billing as the bot's screens use it.

@@ -24,6 +24,7 @@ import (
 	"mikan/internal/panel/model"
 	"mikan/internal/panel/panelimport"
 	"mikan/internal/panel/promo"
+	"mikan/internal/panel/referral"
 	"mikan/internal/panel/server"
 	"mikan/internal/panel/store"
 	"mikan/internal/panel/store/db"
@@ -103,10 +104,11 @@ type Handler struct {
 	tg         Telegram         // nil: no bot
 	shop       *billing.Service // nil: nothing on sale
 	promos     *promo.Service
-	tickets    *tickets.Service // nil: the Mini App has no support screen
-	pages      *subpage.Service // nil: the page as built, nothing of the admin's
-	balance    *domain.Balancer // nil: every node shows
-	happ       *HappLinks       // Happ crypt links, kept per subscription
+	tickets    *tickets.Service  // nil: the Mini App has no support screen
+	referral   *referral.Service // nil: the Mini App has no referral screen
+	pages      *subpage.Service  // nil: the page as built, nothing of the admin's
+	balance    *domain.Balancer  // nil: every node shows
+	happ       *HappLinks        // Happ crypt links, kept per subscription
 	log        *slog.Logger
 	logged     sync.Map // what has been logged lately → when, so a standing fault is one line an hour
 	promoLimit promoLimiter

@@ -40,6 +40,8 @@ func (b *Bot) screen(ctx context.Context, cfg Config, chat int64, data, notice s
 		return b.balanceScreen(ctx, w, chat, cmd, notice)
 	case "k", "kt", "kw":
 		return b.ticketScreen(ctx, w, chat, cmd, arg, notice)
+	case "rf":
+		return b.referralScreen(ctx, w, chat, notice)
 	}
 	// Buying a new subscription works with or without one.
 	if b.canBuyNew(ctx) {
@@ -189,6 +191,9 @@ func (b *Bot) welcome(ctx context.Context, cfg Config, w *words, chat int64, not
 		rows = append(rows, []tgapi.Button{{Text: w.buy, CallbackData: "b"}})
 	}
 	if btn, ok := b.balanceButton(ctx, w, chat); ok {
+		rows = append(rows, []tgapi.Button{btn})
+	}
+	if btn, ok := b.referralButton(ctx, w, chat); ok {
 		rows = append(rows, []tgapi.Button{btn})
 	}
 	if btn, ok := b.supportButton(ctx, cfg, w, chat, ""); ok {
