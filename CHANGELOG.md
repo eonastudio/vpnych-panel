@@ -3,6 +3,12 @@
 Each release has a section in English and in Russian; the release workflow puts them in
 the signed manifest, and the panel shows the one in its language.
 
+## 0.5.2.2-rc.7
+### en
+- **Mini App fixes**: the Telegram profile photo shows again; the device setup sheet is bigger on phones; the help card has descriptions; the promo codes page is tidied up and its back button stays in place; a long device list folds behind "Show all"; the checkout says "Buy a plan" until a plan is picked, then shows its price; fullscreen mode no longer puts content under Telegram's buttons.
+### ru
+- **Исправления в Mini App**: снова видно фото профиля из Telegram; окно настройки устройства на телефоне стало крупнее; в блоке помощи появились пояснения; страница промокодов приведена в порядок, кнопка «Назад» не выходит за край; длинный список устройств сворачивается под «Показать все»; при покупке до выбора тарифа написано «Покупка тарифа», после — его цена; в полноэкранном режиме содержимое больше не уходит под кнопки Telegram.
+
 ## 0.5.2.2-rc.6
 ### en
 - **Templates instead of themes on the subscription page and in the Mini App**: the built-in ВПНыч, Classic, Light, Minimal and Neon plus up to 8 of your own. One is active, the others are drafts seen in the editor's preview. Each template has its own colours, font and background, blocks and their order, any text or button in Russian and English, banners (image, title, text, button, place, Mini App or browser, schedule) and CSS.
