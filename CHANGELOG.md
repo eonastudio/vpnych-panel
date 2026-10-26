@@ -3,6 +3,14 @@
 Each release has a section in English and in Russian; the release workflow puts them in
 the signed manifest, and the panel shows the one in its language.
 
+## 0.5.2.2-rc.9
+### en
+- **Connect a device from the Mini App home**: with a subscription, the extras offer connecting one more device through the setup wizard instead of buying a new subscription.
+- **QR code in the setup wizard**: its last step shows the subscription as a QR code to scan in the app on another device.
+### ru
+- **Подключение устройства с главного экрана Mini App**: при активной подписке вместо «Купить подписку» предлагается подключить ещё одно устройство через мастер.
+- **QR-код в мастере подключения**: на последнем шаге показан QR-код подписки, его можно отсканировать в приложении на другом устройстве.
+
 ## 0.5.2.2-rc.8
 ### en
 - **Mini App in full screen on iPhone**: the page now hears Telegram for iOS (it answers through another entry point), so the content no longer goes under the status bar and Telegram's buttons; the device's safe area is kept too. The Back button and the refresh after paying work on iOS as well.
