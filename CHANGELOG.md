@@ -3,6 +3,12 @@
 Each release has a section in English and in Russian; the release workflow puts them in
 the signed manifest, and the panel shows the one in its language.
 
+## 0.5.2.2-rc.12
+### en
+- **The Mini App is back to the subscription page**: Telegram opens the same page as the browser again, as in 0.5.2.1. Support tickets and the referral program are now sections at the bottom of that page, shown while they are on.
+### ru
+- **Mini App снова в виде страницы подписки**: в Telegram открывается та же страница, что и в браузере, как в 0.5.2.1. Тикеты поддержки и реферальная программа теперь разделы внизу этой страницы, видны, когда включены.
+
 ## 0.5.2.2-rc.11
 ### en
 - **No zoom on phones**: the subscription page, the Mini App and the admin panel no longer zoom in when a text field is tapped, nor by a pinch.
