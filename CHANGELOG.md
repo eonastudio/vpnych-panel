@@ -3,6 +3,16 @@
 Each release has a section in English and in Russian; the release workflow puts them in
 the signed manifest, and the panel shows the one in its language.
 
+## 0.5.2.2-rc.14
+### en
+- **Mini App windows below Telegram's buttons**: the support and "Add a device" windows no longer go under Telegram's header and the screen notch.
+- **Traffic block filled out**: "Downloaded" and "Uploaded" tiles under the ring; with unlimited traffic an "Unlimited traffic" mark sits next to the amount used.
+- **"Add a device" in "My devices"**: an accent button opens the apps by platform in a window; the separate "Connect a device" section shows only when the devices block does not.
+### ru
+- **Окна Mini App ниже кнопок Telegram**: окна поддержки и «Добавить устройство» больше не заходят под шапку Telegram и вырез экрана.
+- **Блок трафика наполнен**: под кольцом плашки «Скачано» и «Отправлено»; при безлимите рядом с израсходованным стоит отметка «Трафик без ограничений».
+- **«Добавить устройство» в «Моих устройствах»**: акцентная кнопка открывает окно с приложениями по платформам; отдельный раздел «Подключить устройство» показывается, только если блока устройств нет.
+
 ## 0.5.2.2-rc.13
 ### en
 - **Mini App page tidied up**: the traffic ring and numbers are in the "{name}, everything works" card; more than five devices fold behind "Show all"; "Change the link" with an icon sits in the "Subscription link" block next to the QR code button instead of a block of its own; "Contact support" opens a support window with the tickets instead of a section at the bottom of the page.
