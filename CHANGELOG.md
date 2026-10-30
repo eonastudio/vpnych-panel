@@ -3,6 +3,12 @@
 Each release has a section in English and in Russian; the release workflow puts them in
 the signed manifest, and the panel shows the one in its language.
 
+## 0.5.2.2-rc.13
+### en
+- **Mini App page tidied up**: the traffic ring and numbers are in the "{name}, everything works" card; more than five devices fold behind "Show all"; "Change the link" with an icon sits in the "Subscription link" block next to the QR code button instead of a block of its own; "Contact support" opens a support window with the tickets instead of a section at the bottom of the page.
+### ru
+- **Страница Mini App стала компактнее**: кольцо и цифры трафика — в карточке «{имя}, всё работает»; больше пяти устройств сворачиваются под «Показать все»; «Сменить ссылку» с иконкой — в блоке «Ссылка на подписку» рядом с кнопкой QR-кода вместо отдельного блока; «Написать в поддержку» открывает окно поддержки с обращениями вместо раздела внизу страницы.
+
 ## 0.5.2.2-rc.12
 ### en
 - **The Mini App is back to the subscription page**: Telegram opens the same page as the browser again, as in 0.5.2.1. Support tickets and the referral program are now sections at the bottom of that page, shown while they are on.
