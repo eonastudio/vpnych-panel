@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Hourglass, Laptop, Layers, Pencil, Smartphone } from "lucide-react";
+import { ChevronDown, ChevronUp, Hourglass, Laptop, Layers, Pencil, Plus, Smartphone } from "lucide-react";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { Button, Pill } from "../components/ui";
 import { t, tMaybe } from "../i18n";
@@ -90,7 +90,7 @@ function pause(hours: number): string {
 }
 
 /** The subscriber's own devices: each holds a place; they unbind them within the admin's rules. */
-export function Devices({ info, subURL, reload, title }: { info: Info; subURL: string; reload: () => Promise<void>; title?: string }) {
+export function Devices({ info, subURL, reload, title, onAdd }: { info: Info; subURL: string; reload: () => Promise<void>; title?: string; onAdd?: () => void }) {
   const [confirm, setConfirm] = useState<number | null>(null);
   const [renaming, setRenaming] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -256,6 +256,11 @@ export function Devices({ info, subURL, reload, title }: { info: Info; subURL: s
         <button type="button" className="btn btn-glass btn-sm mt-2" aria-expanded={unfolded} aria-controls="devices-list" onClick={() => setUnfolded((v) => !v)}>
           {unfolded ? <ChevronUp size={16} aria-hidden /> : <ChevronDown size={16} aria-hidden />}
           {unfolded ? t("sub.devicesLess") : t("sub.devicesMore", { n: list.length })}
+        </button>
+      ) : null}
+      {onAdd ? (
+        <button type="button" className="btn btn-primary btn-block mt-3 h-12 rounded-2xl" onClick={onAdd} aria-haspopup="dialog">
+          <Plus size={18} aria-hidden /> {t("sub.addDevice")}
         </button>
       ) : null}
       {error ? (

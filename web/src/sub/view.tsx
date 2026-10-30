@@ -1,9 +1,10 @@
 // The subscription page's body as its template sets it up (page.ts): its header, backdrop,
 // blocks in their order and banners. The page (main.tsx) gives it the subscriber's data; the admin's
 // preview gives it a sample, so both show the same thing.
-import { Check, ChevronLeft, ChevronRight, Copy, FileText, LifeBuoy, MapPin, QrCode, Send } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Copy, FileText, Infinity as Endless, LifeBuoy, MapPin, QrCode, Send } from "lucide-react";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { Atmosphere } from "../components/atmosphere";
+import { Drawer } from "../components/overlay";
 import { Bar, Button, Pill, QR, Ring, Skeleton } from "../components/ui";
 import { t } from "../i18n";
 import { bytes, dateLong, dateShort, expiryText } from "../lib/format";
@@ -134,6 +135,9 @@ export function Banner({ banner: b, asset }: { banner: PageBanner; asset: (path?
 function block(b: PageBlock, p: BlocksProps): ReactNode {
   const { info } = p;
   const on = (type: PageBlock["type"]) => p.template.blocks.some((x) => x.type === type && x.on);
+  // "My devices" carries "Add a device" with the apps in a window while both blocks are on.
+  const devices = on("devices") && !!(info.binding || info.devices?.length);
+  const apps = p.template.blocks.find((x) => x.type === "apps" && x.on);
   switch (b.type) {
     case "announce":
       return info.announce ? <Announce block={b} text={info.announce} url={info.announce_url} /> : null;
@@ -147,9 +151,10 @@ function block(b: PageBlock, p: BlocksProps): ReactNode {
     case "traffic":
       return on("status") ? <Pools info={info} buy={p.buy} /> : <Traffic block={b} info={info} buy={p.buy} />;
     case "devices":
-      return info.binding || info.devices?.length ? <Devices info={info} subURL={p.subURL} reload={p.reload} title={b.title} /> : null;
+      if (!devices) return null;
+      return apps ? <DevicesAndApps block={b} apps={apps} p={p} /> : <Devices info={info} subURL={p.subURL} reload={p.reload} title={b.title} />;
     case "apps":
-      return <Apps key={p.platform} block={b} apps={p.apps} subURL={p.subURL} brand={info.brand} happ={info.happ_link} tgMode={p.tgMode} platform={p.platform} />;
+      return devices ? null : <Apps key={p.platform} block={b} apps={p.apps} subURL={p.subURL} brand={info.brand} happ={info.happ_link} tgMode={p.tgMode} platform={p.platform} />;
     case "guide":
       return <Guide block={b} />;
     case "instructions":
@@ -235,36 +240,60 @@ function TrafficNumbers({ info, buy }: { info: Info; buy?: BlocksProps["buy"] })
   const pct = cap ? (used / cap) * 100 : 0;
   const [leftValue, leftUnit] = left != null ? bytes(left).split(" ") : ["∞", ""];
   return (
-    <div className="grid grid-cols-[104px_1fr] items-center gap-4">
-      <Ring size={104} pct={pct} unlimited={info.limit == null} label={leftValue} sub={left != null ? t("sub.left", { unit: leftUnit ?? "" }) : t("sub.unlimited")} />
-      <div className="flex flex-col gap-2 text-xs text-[var(--ink-500)]">
-        <div>
-          {t("sub.used")}
-          <b className="num block text-base font-medium text-[var(--ink-900)]">{info.limit != null ? `${bytes(used)} ${ofTotal(info.limit, extra)}` : bytes(used)}</b>
+    <div>
+      <div className="grid grid-cols-[104px_1fr] items-center gap-4">
+        <Ring size={104} pct={pct} unlimited={info.limit == null} label={leftValue} sub={left != null ? t("sub.left", { unit: leftUnit ?? "" }) : t("sub.unlimited")} />
+        <div className="flex flex-col gap-2 text-xs text-[var(--ink-500)]">
+          <div>
+            {t("sub.used")}
+            <b className="num block text-base font-medium text-[var(--ink-900)]">{info.limit != null ? `${bytes(used)} ${ofTotal(info.limit, extra)}` : bytes(used)}</b>
+          </div>
+          {info.limit == null ? (
+            <span className="inline-flex items-center gap-1.5 self-start rounded-full bg-[var(--hover)] px-2.5 py-1 text-xs font-medium text-[var(--mikan-700)]">
+              <Endless size={14} aria-hidden /> {t("sub.trafficFree")}
+            </span>
+          ) : null}
+          {buy?.main && info.limit != null ? (
+            <button type="button" className="btn btn-glass h-9 self-start rounded-xl px-3 text-[13px]" onClick={buy.go} aria-label={t("sub.buyMoreMain")}>
+              {t("sub.buyMore")}
+            </button>
+          ) : null}
+          {info.resets_at ? (
+            <div>
+              {t("sub.resets")}
+              <b className="block text-base font-medium text-[var(--ink-900)]">{dateShort(info.resets_at)}</b>
+            </div>
+          ) : null}
+          {info.device_limit ? (
+            <div>
+              {t("sub.devices")}
+              <b className="num block text-base font-medium text-[var(--ink-900)]">{t(info.device_mode === "online" ? "sub.upToOnline" : "sub.upTo", { n: info.device_limit })}</b>
+            </div>
+          ) : null}
+          {info.speed_limit ? (
+            <div>
+              {t("sub.speed")}
+              <b className="num block text-base font-medium text-[var(--ink-900)]">{t("sub.speedUpTo", { n: info.speed_limit })}</b>
+            </div>
+          ) : null}
         </div>
-        {buy?.main && info.limit != null ? (
-          <button type="button" className="btn btn-glass h-9 self-start rounded-xl px-3 text-[13px]" onClick={buy.go} aria-label={t("sub.buyMoreMain")}>
-            {t("sub.buyMore")}
-          </button>
-        ) : null}
-        {info.resets_at ? (
-          <div>
-            {t("sub.resets")}
-            <b className="block text-base font-medium text-[var(--ink-900)]">{dateShort(info.resets_at)}</b>
-          </div>
-        ) : null}
-        {info.device_limit ? (
-          <div>
-            {t("sub.devices")}
-            <b className="num block text-base font-medium text-[var(--ink-900)]">{t(info.device_mode === "online" ? "sub.upToOnline" : "sub.upTo", { n: info.device_limit })}</b>
-          </div>
-        ) : null}
-        {info.speed_limit ? (
-          <div>
-            {t("sub.speed")}
-            <b className="num block text-base font-medium text-[var(--ink-900)]">{t("sub.speedUpTo", { n: info.speed_limit })}</b>
-          </div>
-        ) : null}
+      </div>
+      {/* Which way the traffic went: the page looks full with no limit too. */}
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Flow icon={<ArrowDown size={16} aria-hidden />} label={t("sub.download")} value={bytes(info.used_down)} />
+        <Flow icon={<ArrowUp size={16} aria-hidden />} label={t("sub.upload")} value={bytes(info.used_up)} />
+      </div>
+    </div>
+  );
+}
+
+function Flow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-2.5 rounded-2xl bg-[var(--hover)] p-3">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-[var(--surface-solid)] text-[var(--mikan-600)]">{icon}</span>
+      <div className="min-w-0 text-xs text-[var(--ink-500)]">
+        {label}
+        <b className="num block truncate text-sm font-medium text-[var(--ink-900)]">{value}</b>
       </div>
     </div>
   );
@@ -314,16 +343,48 @@ export function firstPlatform(apps: PageApps, detected: Platform): Platform {
   return apps.platform === "auto" ? detected : apps.platform;
 }
 
-function Apps({ block: b, apps, subURL, brand, happ, tgMode, platform }: { block: PageBlock; apps: PageApps; subURL: string; brand: string; happ?: string; tgMode: boolean; platform?: Platform }) {
+/** "My devices" with "Add a device": the apps open in a window over the page. */
+function DevicesAndApps({ block: b, apps, p }: { block: PageBlock; apps: PageBlock; p: BlocksProps }) {
+  const [open, setOpen] = useState(false);
+  const { info } = p;
+  return (
+    <>
+      <Devices info={info} subURL={p.subURL} reload={p.reload} title={b.title} onAdd={() => setOpen(true)} />
+      <Drawer open={open} onOpenChange={setOpen} title={blockTitle(apps, t("sub.addDevice"))}>
+        <Apps key={p.platform} block={apps} apps={p.apps} subURL={p.subURL} brand={info.brand} happ={info.happ_link} tgMode={p.tgMode} platform={p.platform} bare />
+      </Drawer>
+    </>
+  );
+}
+
+function Apps({
+  block: b,
+  apps,
+  subURL,
+  brand,
+  happ,
+  tgMode,
+  platform,
+  bare,
+}: {
+  block: PageBlock;
+  apps: PageApps;
+  subURL: string;
+  brand: string;
+  happ?: string;
+  tgMode: boolean;
+  platform?: Platform;
+  /** Inside a window that has the heading already: no card of its own. */
+  bare?: boolean;
+}) {
   const lists = Object.fromEntries(PLATFORMS.map((k) => [k, orderApps(APPS[k], apps[k])])) as Record<Platform, (typeof APPS)[Platform]>;
   const shown = PLATFORMS.filter((k) => lists[k].length > 0);
   const want = platform ?? firstPlatform(apps, detectOnce());
   const [current, setCurrent] = useState<Platform>(shown.includes(want) ? want : (shown[0] ?? want));
   if (shown.length === 0) return null;
   const tab = shown.includes(current) ? current : shown[0]!;
-  return (
-    <section className="glass sub-card p-4">
-      <Heading>{blockTitle(b, t("sub.connect"))}</Heading>
+  const body = (
+    <>
       {shown.length > 1 ? (
         <div className="mb-3 flex gap-1 overflow-x-auto rounded-[14px] bg-[var(--hover)] p-1" role="group" aria-label={t("sub.platform")}>
           {shown.map((k) => (
@@ -363,6 +424,14 @@ function Apps({ block: b, apps, subURL, brand, happ, tgMode, platform }: { block
           </div>
         ))}
       </div>
+    </>
+  );
+  return bare ? (
+    body
+  ) : (
+    <section className="glass sub-card p-4">
+      <Heading>{blockTitle(b, t("sub.connect"))}</Heading>
+      {body}
     </section>
   );
 }
