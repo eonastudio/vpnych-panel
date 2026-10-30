@@ -1,5 +1,6 @@
-import { ArrowLeft, Headphones } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+import { ArrowLeft } from "lucide-react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Drawer } from "../components/overlay";
 import { Button } from "../components/ui";
 import { t } from "../i18n";
 import { dateShort, time } from "../lib/format";
@@ -7,7 +8,7 @@ import { initData, postJSON, subRoot } from "./net";
 
 type Ticket = { ID: number; Subject: string; Status: "open" | "answered" | "closed"; Unread: boolean; CreatedAt: number; UpdatedAt: number };
 type Message = { ID: number; FromAdmin: boolean; Body: string; Photo: string; CreatedAt: number };
-type List = { enabled: boolean; tickets: Ticket[]; max_open: number; max_body: number };
+export type TicketList = { enabled: boolean; tickets: Ticket[]; max_open: number; max_body: number };
 
 const call = <T,>(body: Record<string, unknown>) => postJSON<T>(subRoot + "/tg/tickets", { init_data: initData, ...body });
 
@@ -31,49 +32,56 @@ const when = (unix: number) => {
   return `${dateShort(d)} ${time(d)}`;
 };
 
+/** The account's tickets (the Mini App only); enabled tells whether the admin has them on. */
+export function useTickets(on: boolean) {
+  const [list, setList] = useState<TicketList | null>(null);
+  const load = useCallback(
+    () =>
+      call<TicketList>({ action: "list" })
+        .then((r) => r.ok && setList(r.data as TicketList))
+        .catch(() => undefined),
+    [],
+  );
+  useEffect(() => {
+    if (on) void load();
+  }, [on, load]);
+  return { list, load };
+}
+
 /**
- * Support by tickets in the Mini App, while the admin has them on: a new ticket, the
- * account's tickets and one ticket's messages in place of the list. The same tickets as in
+ * Support by tickets in the Mini App, in a window that "Contact support" opens: a new ticket,
+ * the account's tickets and one ticket's messages in place of the list. The same tickets as in
  * the bot; the admin answers in the panel and the answer also comes in the bot.
  */
-export function TicketsSection() {
-  const [list, setList] = useState<List | null>(null);
-  const [open, setOpen] = useState(0);
-  const load = () =>
-    call<List>({ action: "list" })
-      .then((r) => r.ok && setList(r.data as List))
-      .catch(() => undefined);
+export function SupportDrawer({ open, onOpenChange, list, reload }: { open: boolean; onOpenChange: (v: boolean) => void; list: TicketList; reload: () => Promise<unknown> }) {
+  const [thread, setThread] = useState(0);
   useEffect(() => {
-    void load();
-  }, []);
-  // Off, or not answered: the page has the support link of its own.
-  if (!list?.enabled) return null;
+    // Each opening starts at the list, fresh.
+    if (open) {
+      setThread(0);
+      void reload();
+    }
+  }, [open, reload]);
   return (
-    <section className="glass sub-card p-4" aria-labelledby="tickets-title">
-      <div className="mb-2 flex items-center gap-2">
-        <Headphones size={16} className="text-[var(--ink-600)]" aria-hidden />
-        <h2 id="tickets-title" className="text-[15px] font-semibold">
-          {t("sub.app.ticketsTop")}
-        </h2>
-      </div>
-      {open ? (
+    <Drawer open={open} onOpenChange={onOpenChange} title={t("sub.app.ticketsTop")}>
+      {thread ? (
         <Thread
-          id={open}
+          id={thread}
           onBack={() => {
-            setOpen(0);
-            void load();
+            setThread(0);
+            void reload();
           }}
         />
       ) : (
         <>
-          <Compose ticket={0} maxBody={list.max_body} maxOpen={list.max_open} onSent={(tk) => setOpen(tk.ID)} />
+          <Compose ticket={0} maxBody={list.max_body} maxOpen={list.max_open} onSent={(tk) => setThread(tk.ID)} />
           <div className="mt-4 border-t border-[var(--hairline)] pt-3">
             <div className="mb-2 text-xs font-semibold">{t("sub.app.ticketsList")}</div>
             {list.tickets.length ? (
               <ul className="flex flex-col gap-1">
                 {list.tickets.map((tk) => (
                   <li key={tk.ID}>
-                    <button type="button" className="w-full rounded-xl px-3 py-2 text-left text-[13px] hover:bg-[var(--hover)]" onClick={() => setOpen(tk.ID)}>
+                    <button type="button" className="w-full rounded-xl px-3 py-2 text-left text-[13px] hover:bg-[var(--hover)]" onClick={() => setThread(tk.ID)}>
                       {tk.Unread ? "🔔 " : ""}
                       <span className="font-medium">{tk.Subject}</span>
                       <span className="text-[var(--ink-500)]"> · {t(`sub.app.ticketStatus.${tk.Status}`)}</span>
@@ -87,7 +95,7 @@ export function TicketsSection() {
           </div>
         </>
       )}
-    </section>
+    </Drawer>
   );
 }
 
@@ -197,7 +205,7 @@ function Compose({ ticket, maxBody = 4000, maxOpen = 5, onSent }: { ticket: numb
   };
   const field = `ticket-text-${ticket}`;
   return (
-    <form className="mt-3" onSubmit={(e) => void submit(e)} noValidate>
+    <form className={ticket ? "mt-3" : ""} onSubmit={(e) => void submit(e)} noValidate>
       <label className="mb-1 block text-xs font-semibold" htmlFor={field}>
         {ticket ? t("sub.app.ticketsAnswer") : t("sub.app.ticketsNew")}
       </label>

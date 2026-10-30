@@ -76,8 +76,10 @@ type BlocksProps = {
   /** The Mini App's own sections, built by the page: promo codes, the shop and the packages. */
   promo?: ReactNode;
   shop?: ReactNode;
-  /** The Mini App's "new link" section: it needs the Telegram sign-in, so the page builds it. */
-  reissue?: ReactNode;
+  /** The Mini App's "new link": it needs the Telegram sign-in, so the page builds it; inline is its button in the link's block. */
+  reissue?: (inline: boolean) => ReactNode;
+  /** Opens the support chat in a window of its own; without it "Contact support" is the admin's link. */
+  onSupport?: () => void;
   /** The shop sells here: "renew" goes to it instead of support. */
   selling?: boolean;
   /** Traffic packages on sale for the subscription on screen: for the main traffic, for these groups by name; go shows them. */
@@ -131,17 +133,19 @@ export function Banner({ banner: b, asset }: { banner: PageBanner; asset: (path?
 
 function block(b: PageBlock, p: BlocksProps): ReactNode {
   const { info } = p;
+  const on = (type: PageBlock["type"]) => p.template.blocks.some((x) => x.type === type && x.on);
   switch (b.type) {
     case "announce":
       return info.announce ? <Announce block={b} text={info.announce} url={info.announce_url} /> : null;
     case "status":
-      return <Status info={info} selling={!!p.selling} />;
+      // Traffic sits in the status card while both blocks are on.
+      return <Status info={info} selling={!!p.selling} traffic={on("traffic") ? <TrafficNumbers info={info} buy={p.buy} /> : null} />;
     case "promo":
       return p.promo ?? null;
     case "shop":
       return p.shop ?? null;
     case "traffic":
-      return <Traffic block={b} info={info} buy={p.buy} />;
+      return on("status") ? <Pools info={info} buy={p.buy} /> : <Traffic block={b} info={info} buy={p.buy} />;
     case "devices":
       return info.binding || info.devices?.length ? <Devices info={info} subURL={p.subURL} reload={p.reload} title={b.title} /> : null;
     case "apps":
@@ -151,9 +155,10 @@ function block(b: PageBlock, p: BlocksProps): ReactNode {
     case "instructions":
       return p.docs.length ? <Instructions block={b} docs={p.docs} onOpen={p.onOpenDoc} /> : null;
     case "link":
-      return <SubLink block={b} subURL={p.subURL} qr={p.apps.qr} />;
+      return <SubLink block={b} subURL={p.subURL} qr={p.apps.qr} reissue={p.reissue?.(true)} />;
     case "reissue":
-      return p.reissue ?? null;
+      // The link's block carries the button while it is on.
+      return on("link") ? null : (p.reissue?.(false) ?? null);
     case "locations":
       return info.locations?.length ? <Locations block={b} names={info.locations} /> : null;
     case "telegram": {
@@ -165,6 +170,12 @@ function block(b: PageBlock, p: BlocksProps): ReactNode {
       ) : null;
     }
     case "support": {
+      if (p.onSupport)
+        return (
+          <button type="button" className="btn btn-glass btn-block h-12 rounded-2xl" onClick={p.onSupport} aria-haspopup="dialog">
+            <LifeBuoy size={18} aria-hidden /> {blockTitle(b, t("sub.support"))}
+          </button>
+        );
       const support = safeHref(info.support_url, { tg: true });
       return support ? (
         <a className="btn btn-glass btn-block h-12 rounded-2xl" href={support} target="_blank" rel="noreferrer noopener" {...outside(support)}>
@@ -185,7 +196,7 @@ function Heading({ children, className = "mb-3" }: { children: ReactNode; classN
   return <h2 className={`sub-heading ${className} text-[15px] font-semibold`}>{children}</h2>;
 }
 
-function Status({ info, selling }: { info: Info; selling: boolean }) {
+function Status({ info, selling, traffic }: { info: Info; selling: boolean; traffic?: ReactNode }) {
   // What is left in the admin lists' words ("today", "5 days"); a term that has ended has no countdown.
   const left = info.expires_at ? expiryText(info.expires_at) : null;
   const firstName = info.name.split(/\s+/)[0] ?? "";
@@ -199,6 +210,7 @@ function Status({ info, selling }: { info: Info; selling: boolean }) {
         <span>{info.expires_at ? t("sub.until", { date: dateLong(info.expires_at) }) : t("sub.forever")}</span>
         {left && left.tone !== "bad" ? <Pill tone={tone}>{left.text}</Pill> : null}
       </div>
+      {traffic ? <div className="mt-4 border-t border-[var(--hairline)] pt-4">{traffic}</div> : null}
       {(info.state === "expired" || info.state === "limited" || info.state === "disabled") && support && !selling ? (
         <a className="btn btn-primary btn-block mt-4" href={support} target="_blank" rel="noreferrer noopener" {...outside(support)}>
           {t("sub.renew")}
@@ -208,17 +220,22 @@ function Status({ info, selling }: { info: Info; selling: boolean }) {
   );
 }
 
-function Traffic({ block: b, info, buy }: { block: PageBlock; info: Info; buy?: BlocksProps["buy"] }) {
+/** Traffic used against "of 50 GB + 10 GB packages". */
+function ofTotal(limit: number, more: number): string {
+  return t("sub.of", { total: more > 0 ? t("sub.plusPackages", { limit: bytes(limit), extra: bytes(more) }) : bytes(limit) });
+}
+
+/** The ring of what is left and the numbers beside it: used, resets, devices, speed. */
+function TrafficNumbers({ info, buy }: { info: Info; buy?: BlocksProps["buy"] }) {
   const used = info.used_up + info.used_down;
   const extra = info.extra ?? 0;
   // Traffic packages are spent after the tariff's traffic: they add to what is left.
   const left = info.limit != null ? Math.max(0, info.limit - used) + extra : null;
   const cap = info.limit != null ? Math.max(info.limit, used) + extra : 0;
   const pct = cap ? (used / cap) * 100 : 0;
-  const ofTotal = (limit: number, more: number) => t("sub.of", { total: more > 0 ? t("sub.plusPackages", { limit: bytes(limit), extra: bytes(more) }) : bytes(limit) });
   const [leftValue, leftUnit] = left != null ? bytes(left).split(" ") : ["∞", ""];
-  const numbers = (
-    <>
+  return (
+    <div className="grid grid-cols-[104px_1fr] items-center gap-4">
       <Ring size={104} pct={pct} unlimited={info.limit == null} label={leftValue} sub={left != null ? t("sub.left", { unit: leftUnit ?? "" }) : t("sub.unlimited")} />
       <div className="flex flex-col gap-2 text-xs text-[var(--ink-500)]">
         <div>
@@ -249,42 +266,47 @@ function Traffic({ block: b, info, buy }: { block: PageBlock; info: Info; buy?: 
           </div>
         ) : null}
       </div>
-    </>
+    </div>
   );
+}
+
+/** The traffic block on its own, when the status card is off. */
+function Traffic({ block: b, info, buy }: { block: PageBlock; info: Info; buy?: BlocksProps["buy"] }) {
   return (
     <>
-      {b.title ? (
-        <section className="glass sub-card p-4">
-          <Heading>{b.title}</Heading>
-          <div className="grid grid-cols-[104px_1fr] items-center gap-4">{numbers}</div>
-        </section>
-      ) : (
-        <section className="glass sub-card grid grid-cols-[104px_1fr] items-center gap-4 p-4">{numbers}</section>
-      )}
-      {info.pools?.length ? (
-        <section className="glass sub-card p-4">
-          <Heading>{t("sub.pools")}</Heading>
-          <ul className="flex flex-col gap-3">
-            {info.pools.map((pool) => (
-              <li key={pool.name}>
-                <div className="mb-1 flex items-center justify-between gap-2 text-[13px]">
-                  <span className="font-medium">{pool.name}</span>
-                  <span className="num text-xs text-[var(--ink-600)]">{pool.limit != null ? `${bytes(pool.used)} ${ofTotal(pool.limit, pool.extra ?? 0)}` : `${bytes(pool.used)} · ${t("sub.poolUnlimited")}`}</span>
-                </div>
-                {pool.limit != null ? <Bar label={pool.name} pct={Math.min(100, (pool.used / (Math.max(pool.limit, pool.used) + (pool.extra ?? 0))) * 100)} /> : null}
-                {pool.limit != null && pool.used >= pool.limit && !pool.extra ? <p className="mt-1 text-xs text-[var(--berry-600)]">{t("sub.poolOut")}</p> : null}
-                {pool.limit != null && buy?.pools.has(pool.name) ? (
-                  <button type="button" className="link-btn mt-1 text-xs" onClick={buy.go} aria-label={t("sub.buyMoreOf", { name: pool.name })}>
-                    {t("sub.buyMore")}
-                  </button>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <section className="glass sub-card p-4">
+        {b.title ? <Heading>{b.title}</Heading> : null}
+        <TrafficNumbers info={info} buy={buy} />
+      </section>
+      <Pools info={info} buy={buy} />
     </>
   );
+}
+
+/** "Separate limits": server groups with a traffic limit of their own. */
+function Pools({ info, buy }: { info: Info; buy?: BlocksProps["buy"] }) {
+  return info.pools?.length ? (
+    <section className="glass sub-card p-4">
+      <Heading>{t("sub.pools")}</Heading>
+      <ul className="flex flex-col gap-3">
+        {info.pools.map((pool) => (
+          <li key={pool.name}>
+            <div className="mb-1 flex items-center justify-between gap-2 text-[13px]">
+              <span className="font-medium">{pool.name}</span>
+              <span className="num text-xs text-[var(--ink-600)]">{pool.limit != null ? `${bytes(pool.used)} ${ofTotal(pool.limit, pool.extra ?? 0)}` : `${bytes(pool.used)} · ${t("sub.poolUnlimited")}`}</span>
+            </div>
+            {pool.limit != null ? <Bar label={pool.name} pct={Math.min(100, (pool.used / (Math.max(pool.limit, pool.used) + (pool.extra ?? 0))) * 100)} /> : null}
+            {pool.limit != null && pool.used >= pool.limit && !pool.extra ? <p className="mt-1 text-xs text-[var(--berry-600)]">{t("sub.poolOut")}</p> : null}
+            {pool.limit != null && buy?.pools.has(pool.name) ? (
+              <button type="button" className="link-btn mt-1 text-xs" onClick={buy.go} aria-label={t("sub.buyMoreOf", { name: pool.name })}>
+                {t("sub.buyMore")}
+              </button>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </section>
+  ) : null;
 }
 
 /** The tab a page opens on: the admin's, or the visitor's device. */
@@ -392,7 +414,7 @@ function Instructions({ block: b, docs, onOpen }: { block: PageBlock; docs: DocI
   );
 }
 
-function SubLink({ block: b, subURL, qr }: { block: PageBlock; subURL: string; qr: boolean }) {
+function SubLink({ block: b, subURL, qr, reissue }: { block: PageBlock; subURL: string; qr: boolean; reissue?: ReactNode }) {
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
   const field = useRef<HTMLSpanElement>(null);
@@ -418,17 +440,20 @@ function SubLink({ block: b, subURL, qr }: { block: PageBlock; subURL: string; q
           {copied ? <Check size={18} className="text-[var(--leaf-500)]" /> : <Copy size={18} />}
         </button>
       </div>
-      {qr ? (
-        <>
-          <button type="button" className="btn btn-glass btn-sm mt-2" onClick={() => setShowQR((v) => !v)} aria-expanded={showQR}>
-            <QrCode size={16} aria-hidden /> {t("sub.qrOther")}
-          </button>
-          {showQR ? (
-            <div className="mt-3 flex justify-center">
-              <QR value={subURL} size={200} />
-            </div>
+      {qr || reissue ? (
+        <div className="mt-2 flex flex-wrap items-start gap-2">
+          {qr ? (
+            <button type="button" className="btn btn-glass btn-sm" onClick={() => setShowQR((v) => !v)} aria-expanded={showQR}>
+              <QrCode size={16} aria-hidden /> {t("sub.qrOther")}
+            </button>
           ) : null}
-        </>
+          {reissue}
+        </div>
+      ) : null}
+      {qr && showQR ? (
+        <div className="mt-3 flex justify-center">
+          <QR value={subURL} size={200} />
+        </div>
       ) : null}
     </section>
   );

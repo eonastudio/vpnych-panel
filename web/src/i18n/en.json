@@ -2469,6 +2469,8 @@
     "speed": "Speed",
     "speedUpTo": "up to {n} Mbit/s",
     "devicesTitle": "My devices",
+    "devicesMore": "Show all ({n})",
+    "devicesLess": "Show fewer",
     "devicesCount": "{n} of {limit}",
     "devicesFull": "All places are taken. To connect a new device, unbind one you no longer use.",
     "devicesEmpty": "Devices appear here once an app loads the subscription.",

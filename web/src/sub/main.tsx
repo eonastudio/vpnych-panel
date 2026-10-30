@@ -16,7 +16,7 @@ import { FreePlan, loadShop, Shop, type ShopData } from "./shop";
 import { PromoSection } from "./promo";
 import { ReferralSection } from "./referral";
 import { ReissueSection } from "./reissue";
-import { TicketsSection } from "./tickets";
+import { SupportDrawer, useTickets } from "./tickets";
 import type { Info, TgSub } from "./types";
 import { DocScreen, PageBackdrop, PageBlocks, PageShell } from "./view";
 
@@ -60,6 +60,9 @@ function SubPage() {
   const [shop, setShop] = useState<ShopData | null>(null);
   const [packages, setPackages] = useState<{ token: string; data: ShopData } | null>(null);
   const [promoCode, setPromoCode] = useState("");
+  // Tickets in the Mini App: "Contact support" opens them in a window while the admin has them on.
+  const tickets = useTickets(tgMode);
+  const [supportOpen, setSupportOpen] = useState(false);
   // The instruction open on its own screen; the browser's (or Telegram's) back closes it.
   // A reload keeps the instruction that was open (its id is in the history entry).
   const [docId, setDocId] = useState<number | null>(() => {
@@ -439,10 +442,12 @@ function SubPage() {
             </>
           ) : null
         }
-        reissue={
+        onSupport={tickets.list?.enabled ? () => setSupportOpen(true) : undefined}
+        reissue={(inline) =>
           tgMode ? (
             <ReissueSection
               key={token}
+              inline={inline}
               info={current}
               subURL={subURL}
               title={titleOf(template, "reissue")}
@@ -458,12 +463,8 @@ function SubPage() {
         reload={() => loadInfo(subURL).catch(() => undefined)}
         onOpenDoc={openDoc}
       />
-      {tgMode ? (
-        <>
-          <TicketsSection />
-          <ReferralSection />
-        </>
-      ) : null}
+      {tgMode ? <ReferralSection /> : null}
+      {tickets.list?.enabled ? <SupportDrawer open={supportOpen} onOpenChange={setSupportOpen} list={tickets.list} reload={tickets.load} /> : null}
     </Shell>
   );
 }

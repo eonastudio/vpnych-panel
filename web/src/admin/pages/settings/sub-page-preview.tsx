@@ -200,11 +200,11 @@ function PreviewPage(p: PreviewProps) {
           />
         </div>
       }
-      reissue={
-        <div inert>
-          <ReissueSection info={{ ...p.info, reissue: true }} subURL="" title={titleOf(p.template, "reissue")} onDone={() => undefined} />
+      reissue={(inline) => (
+        <div inert className={inline ? "contents" : undefined}>
+          <ReissueSection info={{ ...p.info, reissue: true }} subURL="" inline={inline} title={titleOf(p.template, "reissue")} onDone={() => undefined} />
         </div>
-      }
+      )}
       reload={() => Promise.resolve()}
       onOpenDoc={setDocId}
     />,

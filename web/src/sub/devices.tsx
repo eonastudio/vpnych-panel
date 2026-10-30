@@ -1,4 +1,4 @@
-import { Hourglass, Laptop, Layers, Pencil, Smartphone } from "lucide-react";
+import { ChevronDown, ChevronUp, Hourglass, Laptop, Layers, Pencil, Smartphone } from "lucide-react";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { Button, Pill } from "../components/ui";
 import { t, tMaybe } from "../i18n";
@@ -81,6 +81,9 @@ function RenameForm({ d, subURL, onDone }: { d: Device; subURL: string; onDone: 
 
 /** The unbind window in words: "сутки", "неделю", "10 дней". */
 
+/** How many devices show before the rest fold under "show all". */
+const FOLDED = 5;
+
 /** A pause in hours, whole days as days. */
 function pause(hours: number): string {
   return hours % 24 === 0 ? t("sub.periodDays", { n: hours / 24 }) : t("sub.pauseHours", { n: hours });
@@ -92,9 +95,12 @@ export function Devices({ info, subURL, reload, title }: { info: Info; subURL: s
   const [renaming, setRenaming] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [unfolded, setUnfolded] = useState(false);
   // The button that opened the confirmation: focus goes back to it, not to the page's top.
   const opener = useRef<number | null>(null);
   const list = info.devices ?? [];
+  const folds = list.length > FOLDED;
+  const shown = folds && !unfolded ? list.slice(0, FOLDED) : list;
   // The online mode has no places to run out of: the limit is for devices connected at once.
   const online = info.device_mode === "online";
   const full = !online && info.device_limit > 0 && list.length >= info.device_limit;
@@ -180,8 +186,8 @@ export function Devices({ info, subURL, reload, title }: { info: Info; subURL: s
       {list.length === 0 ? (
         <p className="text-[13px] text-[var(--ink-500)]">{t("sub.devicesEmpty")}</p>
       ) : (
-        <ul className="row-list">
-          {list.map((d) => {
+        <ul id="devices-list" className="row-list">
+          {shown.map((d) => {
             const name = deviceName(d);
             const meta = deviceDetails(d, !d.shared);
             return (
@@ -246,6 +252,12 @@ export function Devices({ info, subURL, reload, title }: { info: Info; subURL: s
           })}
         </ul>
       )}
+      {folds ? (
+        <button type="button" className="btn btn-glass btn-sm mt-2" aria-expanded={unfolded} aria-controls="devices-list" onClick={() => setUnfolded((v) => !v)}>
+          {unfolded ? <ChevronUp size={16} aria-hidden /> : <ChevronDown size={16} aria-hidden />}
+          {unfolded ? t("sub.devicesLess") : t("sub.devicesMore", { n: list.length })}
+        </button>
+      ) : null}
       {error ? (
         <p className="mt-2 text-[13px] text-[var(--berry-600)]" role="alert">
           {error}
